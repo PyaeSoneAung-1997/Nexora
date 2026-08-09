@@ -26,8 +26,8 @@ CLIENT_SECRETS_FILE = BASE_DIR / "client_secrets.json"
 # Windows: C:\Users\<User>\AppData\Roaming\Nexora\data
 SYSTEM_APPDATA = os.getenv("APPDATA") or os.path.expanduser("~")
 APP_DATA_DIR = Path(SYSTEM_APPDATA) / APP_NAME 
-
-LOG_DIR = APP_DATA_DIR / "logs"
+print(APP_DATA_DIR)
+LOGS_DIR = APP_DATA_DIR / "logs"
 TEMP_DIR = APP_DATA_DIR / "temp"
 EXPORT_DIR = APP_DATA_DIR / "exports"
 
@@ -39,7 +39,7 @@ def create_app_directories():
     """App စတင်ချိန်တွင် လိုအပ်သော AppData Folder များကို အလိုအလျောက် Create လုပ်ပေးမည်"""
     directories = [
         APP_DATA_DIR,
-        LOG_DIR,
+        LOGS_DIR,
         TEMP_DIR,
         EXPORT_DIR,
         DOWNLOAD_DIR,

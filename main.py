@@ -4,20 +4,52 @@ from config import (
     APP_DATA_DIR,
     APP_NAME,
     APP_VERSION)
-
+from config import AppConfig
+from core.database.db_manager import DatabaseManager
 from core.url import URLManager
-from core.cloud.drive_auth import GoogleAuthManager, logout_user
+from core.cloud.auth_manager import GoogleAuthManager
 
 def main():
 # Step-1
     # Base AppData Folders ဖန်တီးခြင်း
     # create_app_directories()
+    # print(f"App name:{APP_NAME}\nApp version:{APP_VERSION} \nApp Data Dir:{APP_DATA_DIR}")
+    # config = AppConfig()
+    # print("⚙️  App Settings Loaded:")
+    # print(f"   - Download Path: {config.download_path}")
+    # print(f"   - Temp Path    : {config.temp_path}")
+    # print(f"   - Max Downloads: {config.max_concurrent}")
+    # print(f"   - Theme        : {config.theme}")
     
-    # print(f"App Name: {APP_NAME}")
-    # print(f"App version: {APP_VERSION}")
-    # print(f"Nexora Initialized Successfully!")
-    # print(f"App Data Directory: {APP_DATA_DIR}")
+    db = DatabaseManager()
+    settings_count = db.fetch_one("SELECT COUNT(*) as count FROM app_settings")["count"]
+    print(f"📊 Total settings seeded in Database: {settings_count}")
 
+    print("\n✅ Nexora Core Initialization Complete!\n")
+
+    auth_mgr = GoogleAuthManager(db_manager=db)
+    active_accounts = auth_mgr.get_active_accounts()
+
+    if active_accounts:
+        print(f"🔑 Logged in Accounts ({len(active_accounts)}):")
+        for acc in active_accounts:
+            print(f"   - {acc['name']} ({acc['email']}) [Status: {acc['status']}]")
+    else:
+        print("🔒 No active accounts found. Starting Google Login Flow...")
+        try:
+            # Login မဝင်ရသေးပါက Browser ဖွင့်ပြီး Login တောင်းမည်
+            account = auth_mgr.login()
+            print(f"✅ Login Successful!")
+            print(f"   - Account Name : {account['name']}")
+            print(f"   - Account Email: {account['email']}")
+            print(f"   - Token Stored : {account['token_path']}")
+        except FileNotFoundError as e:
+            print(f"⚠️  Login Warning: {e}")
+            print("   (Please add 'client_secret.json' into the config folder to log in)")
+        except Exception as e:
+            print(f"❌ Login Failed: {e}")
+
+    print("\n✅ Nexora Core Initialization Complete!\n")
 #Step-2
     #Url Check First
     # manager = URLManager()
