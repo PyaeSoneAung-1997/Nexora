@@ -2,8 +2,8 @@
 
 import sqlite3
 from pathlib import Path
-from config.paths import DATABASE_PATH
-from config.settings import DEFAULT_APP_SETTINGS
+from config.app_paths import DATABASE_PATH
+from config.app_constants import DEFAULT_APP_SETTINGS
 from core.database.schema import CREATE_SCHEMA_SQL
 
 

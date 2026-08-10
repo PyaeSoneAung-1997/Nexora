@@ -1,4 +1,4 @@
-from config.paths import DOWNLOAD_DIR
+from config.app_paths import DOWNLOAD_DIR, DEFAULT_DOWNLOAD_DIR, DEFAULT_TEMP_DIR
 
 # App Information
 APP_NAME = "Nexora"
@@ -43,4 +43,25 @@ WORKSPACE_EXPORT_EXT_MAP = {
     "application/vnd.google-apps.document": "docx",
     "application/vnd.google-apps.spreadsheet": "xlsx",
     "application/vnd.google-apps.presentation": "pptx"
+}
+
+DEFAULT_APP_SETTINGS = {
+    "default_download_path": (str(DEFAULT_DOWNLOAD_DIR), "download"),
+    "temp_download_path": (str(DEFAULT_TEMP_DIR), "download"),
+    "max_concurrent_downloads": ("3", "download"),
+    "duplicate_file_action": ("auto_rename", "download"),
+    "max_retries_per_item": ("5", "download"),
+    "auto_resume_on_startup": ("true", "download"),
+    "speed_limit_kbps": ("0", "network"),
+    "max_connections_per_file": ("4", "network"),
+    "default_export_doc": ("docx", "google"),
+    "default_export_sheet": ("xlsx", "google"),
+    "default_export_slide": ("pptx", "google"),
+    "auto_sync_interval_minutes": ("30", "google"),
+    "prevent_sleep_during_download": ("true", "system"),
+    "minimize_to_tray_on_close": ("true", "system"),
+    "launch_on_startup": ("false", "system"),
+    "theme": ("dark", "ui"),
+    "notify_on_complete": ("true", "ui"),
+    "play_sound_on_complete": ("true", "ui")
 }

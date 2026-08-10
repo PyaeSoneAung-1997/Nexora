@@ -7,8 +7,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from config.paths import APP_DATA_DIR, CLIENT_SECRETS_FILE
-from config.constants import GOOGLE_SCOPES
+from config.app_paths import APP_DATA_DIR, CLIENT_SECRETS_FILE
+from config.app_constants import GOOGLE_SCOPES
 from core.database.db_manager import DatabaseManager
 
 

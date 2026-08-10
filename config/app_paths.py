@@ -1,5 +1,6 @@
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 APP_NAME = "Nexora"
@@ -26,7 +27,6 @@ CLIENT_SECRETS_FILE = BASE_DIR / "client_secrets.json"
 # Windows: C:\Users\<User>\AppData\Roaming\Nexora\data
 SYSTEM_APPDATA = os.getenv("APPDATA") or os.path.expanduser("~")
 APP_DATA_DIR = Path(SYSTEM_APPDATA) / APP_NAME 
-print(APP_DATA_DIR)
 LOGS_DIR = APP_DATA_DIR / "logs"
 TEMP_DIR = APP_DATA_DIR / "temp"
 EXPORT_DIR = APP_DATA_DIR / "exports"
@@ -34,6 +34,10 @@ EXPORT_DIR = APP_DATA_DIR / "exports"
 DATABASE_PATH = APP_DATA_DIR / "nexora.db"
 SETTINGS_FILE = APP_DATA_DIR / "settings.json"
 DOWNLOAD_DIR  = APP_DATA_DIR / "downloads" 
+
+
+DEFAULT_DOWNLOAD_DIR = Path.home() / "Downloads" / APP_NAME
+DEFAULT_TEMP_DIR = Path(tempfile.gettempdir()) / "NexoraTemp"
 
 def create_app_directories():
     """App စတင်ချိန်တွင် လိုအပ်သော AppData Folder များကို အလိုအလျောက် Create လုပ်ပေးမည်"""
