@@ -56,12 +56,12 @@ class GoogleAuthManager:
         # 4. Database `accounts` ဇယားထဲသို့ Insert/Update ပြုလုပ်မည်
         query = """
             INSERT INTO accounts (email, name, token_path, status, last_used_at)
-            VALUES (?, ?, ?, 'active', CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, 'active', datetime('now', 'localtime'))
             ON CONFLICT(email) DO UPDATE SET
                 name = excluded.name,
                 token_path = excluded.token_path,
                 status = 'active',
-                last_used_at = CURRENT_TIMESTAMP;
+                last_used_at = datetime('now', 'localtime');
         """
         account_id = self.db.execute_query(query, (email, name, str(token_file_path)))
 

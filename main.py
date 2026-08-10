@@ -10,69 +10,54 @@ from core.url import URLManager
 from core.cloud.auth_manager import GoogleAuthManager
 
 def main():
-# Step-1
-    # Base AppData Folders ဖန်တီးခြင်း
-    # create_app_directories()
-    # print(f"App name:{APP_NAME}\nApp version:{APP_VERSION} \nApp Data Dir:{APP_DATA_DIR}")
-    # config = AppConfig()
-    # print("⚙️  App Settings Loaded:")
-    # print(f"   - Download Path: {config.download_path}")
-    # print(f"   - Temp Path    : {config.temp_path}")
-    # print(f"   - Max Downloads: {config.max_concurrent}")
-    # print(f"   - Theme        : {config.theme}")
-    
+    print("🚀 Initializing Nexora Engine...\n")
+
+    # 1. Folders ဖန်တီးခြင်း
+    create_app_directories()
+    print("📁 System directories initialized.")
+
+    # 2. Database Initialization
     db = DatabaseManager()
-    settings_count = db.fetch_one("SELECT COUNT(*) as count FROM app_settings")["count"]
-    print(f"📊 Total settings seeded in Database: {settings_count}")
+    print("💾 SQLite Database initialized successfully.")
 
-    print("\n✅ Nexora Core Initialization Complete!\n")
+    # 3. App Config Load လုပ်ခြင်း
+    # config = AppConfig()
+    # print("⚙️  App Settings Loaded.")
 
+    # 4. Auth Manager & Credentials Test ပြုလုပ်ခြင်း
     auth_mgr = GoogleAuthManager(db_manager=db)
     active_accounts = auth_mgr.get_active_accounts()
 
     if active_accounts:
-        print(f"🔑 Logged in Accounts ({len(active_accounts)}):")
+        print(f"\n🔑 Logged in Accounts ({len(active_accounts)}):")
         for acc in active_accounts:
-            print(f"   - {acc['name']} ({acc['email']}) [Status: {acc['status']}]")
+            acc_id = acc["id"]
+            email = acc["email"]
+            
+            # 🌟 ဒီနေရာမှာ get_credentials ကို စမ်းသပ် ခေါ်ယူသုံးစွဲပါသည် 🌟
+            creds = auth_mgr.get_credentials(account_id=acc_id)
+            
+            if creds:
+                print(f"   - [{acc_id}] {acc['name']} ({email}) -> Credentials Active & Valid ✅")
+            else:
+                print(f"   - [{acc_id}] {acc['name']} ({email}) -> Credentials Invalid / Token Missing ❌")
     else:
-        print("🔒 No active accounts found. Starting Google Login Flow...")
+        print("\n🔒 No active accounts found. Starting Google Login Flow...")
         try:
-            # Login မဝင်ရသေးပါက Browser ဖွင့်ပြီး Login တောင်းမည်
             account = auth_mgr.login()
-            print(f"✅ Login Successful!")
-            print(f"   - Account Name : {account['name']}")
-            print(f"   - Account Email: {account['email']}")
-            print(f"   - Token Stored : {account['token_path']}")
-        except FileNotFoundError as e:
-            print(f"⚠️  Login Warning: {e}")
-            print("   (Please add 'client_secret.json' into the config folder to log in)")
+            print(f"✅ Login Successful for: {account['email']}")
         except Exception as e:
-            print(f"❌ Login Failed: {e}")
+            print(f"❌ Login Failed or Cancelled: {e}")
 
     print("\n✅ Nexora Core Initialization Complete!\n")
-#Step-2
-    #Url Check First
-    # manager = URLManager()
-    # result = manager.analyze("https://drive.google.com/file/d/12345/view")
-    # print(result)
 
-#Step-3
-    #Google Drive Connect
-    # auth_manager = GoogleAuthManager()
-    
-    # try:
-    #     # Token မရှိပါက Browser ပွင့်လာပြီး Login ဝင်ခိုင်းပါမည်
-    #     service = auth_manager.get_drive_service()
-    #     print("✅ Google Login Successful!")
-    # except Exception as e:
-    #     print(f"❌ Login Failed: {e}")
+    # 5. URL Check First
+    manager = URLManager()
+    result = manager.analyze("https://drive.google.com/file/d/12345/view")
+    print(result)
+
+
 
 
 if __name__ == "__main__":
     main()
-#Step-3
-    #Token File Delete log out function call
-    # if logout_user():
-    #     print("🚪 Logged out successfully!")
-    # else:
-    #     print("⚠️ No active session found.")

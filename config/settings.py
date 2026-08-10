@@ -6,6 +6,7 @@ from pathlib import Path
 DEFAULT_DOWNLOAD_DIR = Path.home() / "Downloads" / "Nexora"
 DEFAULT_TEMP_DIR = Path(tempfile.gettempdir()) / "NexoraTemp"
 
+
 DEFAULT_APP_SETTINGS = {
     # Download Settings
     "default_download_path": (str(DEFAULT_DOWNLOAD_DIR), "download"),

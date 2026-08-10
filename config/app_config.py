@@ -32,7 +32,6 @@ class AppConfig:
     
 class ConfigManager:
     """Database app_settings ဇယားမှ Dynamic Settings များကို ဖတ်/ရေး ရန် Class"""
-
     def __init__(self, db_manager: DatabaseManager = None):
         self.db = db_manager or DatabaseManager()
 
@@ -42,10 +41,10 @@ class ConfigManager:
 
     def set(self, key: str, value: str) -> None:
         self.db.execute_query(
-            "UPDATE app_settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?",
-            (str(value), key)
-        )
+                "UPDATE app_settings SET value = ?, updated_at = datetime('now', 'localtime') WHERE key = ?",
+                (str(value), key)
+            )
 
     def get_category(self, category: str) -> dict:
         rows = self.db.fetch_all("SELECT key, value FROM app_settings WHERE category = ?", (category,))
-        return {row["key"]: row["value"] for row in rows}
+        return {row["key"]: row["value"] for row in rows}    

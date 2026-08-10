@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS accounts (
     name VARCHAR(255),
     token_path TEXT NOT NULL,
     status VARCHAR(50) DEFAULT 'active',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_used_at DATETIME
+    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    last_used_at DATETIME DEFAULT (datetime('now', 'localtime'))
 );
 
 -- 2. DRIVES
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS drives (
     total_files INTEGER DEFAULT 0,
     total_folders INTEGER DEFAULT 0,
     total_size BIGINT DEFAULT 0,
-    last_scanned DATETIME,
+    last_scanned DATETIME DEFAULT (datetime('now', 'localtime')),
     status VARCHAR(50) DEFAULT 'idle',
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
 );
@@ -42,9 +42,9 @@ CREATE TABLE IF NOT EXISTS drive_files (
     md5_checksum VARCHAR(64),
     web_view_link TEXT,
     trashed BOOLEAN DEFAULT 0,
-    created_at DATETIME,
-    modified_time DATETIME,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    modified_time DATETIME DEFAULT (datetime('now', 'localtime')),
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
 );
 
@@ -59,9 +59,9 @@ CREATE TABLE IF NOT EXISTS sync_jobs (
     scanned_files INTEGER DEFAULT 0,
     scanned_folders INTEGER DEFAULT 0,
     error_message TEXT,
-    started_at DATETIME,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    completed_at DATETIME,
+    started_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    completed_at DATETIME DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
 );
 
@@ -78,8 +78,8 @@ CREATE TABLE IF NOT EXISTS download_queues (
     scheduled_start_at DATETIME,
     scheduled_stop_at DATETIME,
     auto_shutdown BOOLEAN DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    completed_at DATETIME,
+    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    completed_at DATETIME DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
 );
 
@@ -97,9 +97,9 @@ CREATE TABLE IF NOT EXISTS download_items (
     status VARCHAR(50) DEFAULT 'queued',
     retry_count INTEGER DEFAULT 0,
     error_message TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    started_at DATETIME,
-    completed_at DATETIME,
+    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    started_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    completed_at DATETIME DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (queue_id) REFERENCES download_queues(id) ON DELETE CASCADE,
     FOREIGN KEY (drive_file_id) REFERENCES drive_files(id) ON DELETE CASCADE
 );
@@ -119,8 +119,8 @@ CREATE TABLE IF NOT EXISTS download_history (
     queue_title VARCHAR(255),
     status VARCHAR(50) NOT NULL,
     error_message TEXT,
-    started_at DATETIME,
-    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    started_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    completed_at DATETIME DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
 );
 
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
     key VARCHAR(255) NOT NULL UNIQUE,
     value TEXT,
     category VARCHAR(100),
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
 );
 
 -- INDEXES
