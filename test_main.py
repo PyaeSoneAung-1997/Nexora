@@ -165,7 +165,7 @@ def main():
     print("\n✅ Nexora Core Initialization Complete!\n")
 
     # 4. URL Resolver Analysis
-    url = "https://drive.google.com/drive/shared-drives"
+    url = "https://drive.google.com/drive/my-drive"
     manager = URLManager()
     result = manager.analyze(url)
 

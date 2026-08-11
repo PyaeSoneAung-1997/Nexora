@@ -1,5 +1,3 @@
-# core/database/db_manager.py
-
 import sqlite3
 from pathlib import Path
 from config.app_paths import DATABASE_PATH
@@ -8,8 +6,8 @@ from core.database.schema import CREATE_SCHEMA_SQL
 
 
 class DatabaseManager:
-    def __init__(self, DATABASE_PATH: Path = DATABASE_PATH):
-        self.DATABASE_PATH = DATABASE_PATH
+    def __init__(self, db_path: Path = DATABASE_PATH):
+        self.DATABASE_PATH = db_path
         self._init_db()
 
     def get_connection(self) -> sqlite3.Connection:
@@ -37,12 +35,19 @@ class DatabaseManager:
             conn.commit()
 
     def execute_query(self, query: str, params: tuple = ()) -> int:
-        """INSERT, UPDATE, DELETE query များ လုပ်ဆောင်ရန်"""
+        """INSERT, UPDATE, DELETE query တစ်ခုတည်း လုပ်ဆောင်ရန်"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(query, params)
             conn.commit()
             return cursor.lastrowid
+
+    def execute_many(self, query: str, params_list: list[tuple]) -> None:
+        """INSERT, UPDATE batch processing များ အများအပြား တစ်ပြိုင်နက် လုပ်ဆောင်ရန်"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.executemany(query, params_list)
+            conn.commit()
 
     def fetch_all(self, query: str, params: tuple = ()) -> list[dict]:
         """SELECT Query များဖြင့် List of Dicts ထုတ်ယူရန်"""
