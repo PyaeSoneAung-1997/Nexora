@@ -8,6 +8,8 @@ from config import AppConfig
 from core.database.db_manager import DatabaseManager
 from core.url import URLManager
 from core.cloud.auth_manager import GoogleAuthManager
+from core.cloud.drive_resolver import DriveResolver
+from core.cloud.drive_scanner import DriveScanner
 
 def main():
     print("🚀 Initializing Nexora Engine...\n")
@@ -52,10 +54,24 @@ def main():
     print("\n✅ Nexora Core Initialization Complete!\n")
 
     # 5. URL Check First
+    # url = "https://drive.google.com/drive/folders/16J1isPtoHQJIOWfbRD3rfmYh7MhTIKw6"
+    # url = "https://drive.google.com/drive/my-drive"
+    url = "https://drive.google.com/drive/shared-drives"
+    # url = "https://drive.google.com/drive/folders/0AO8hnuAAF4SoUk9PVA"
+    
     manager = URLManager()
-    result = manager.analyze("https://drive.google.com/file/d/12345/view")
-    print(result)
+    result = manager.analyze(url)
+    # print(result)
 
+    resolv = DriveResolver()
+    res     = resolv.resolve(acc_id,url)
+
+    print(res)
+    scanner = DriveScanner()
+    list = scanner.list_shared_drives(acc_id)
+    print(list[0]['id'])
+    scan_info = scanner.scan_single_shared_drive(acc_id, list[0]['id'], list[0]['name'])
+    print(scan_info)
 
 
 
