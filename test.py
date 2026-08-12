@@ -390,113 +390,178 @@
 #             self.db.execute_query("UPDATE drives SET status = 'failed' WHERE drive_id = ?", (drive_id,))
 #             raise e
 
-import tkinter as tk
-from tkinter import ttk, messagebox
-from core.database.db_manager import DatabaseManager
-from core.sync.sync_manager import SyncManager
+# import tkinter as tk
+# from tkinter import ttk, messagebox
+# from core.database.db_manager import DatabaseManager
+# from core.sync.sync_manager import SyncManager
 
 
-class SyncTestApp(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Google Drive Sync Engine - Test UI")
-        self.geometry("520x380")
-        self.resizable(False, False)
+# class SyncTestApp(tk.Tk):
+#     def __init__(self):
+#         super().__init__()
+#         self.title("Google Drive Sync Engine - Test UI")
+#         self.geometry("520x380")
+#         self.resizable(False, False)
 
-        # Managers
-        self.db = DatabaseManager()
-        self.sync_mgr = SyncManager()
+#         # Managers
+#         self.db = DatabaseManager()
+#         self.sync_mgr = SyncManager()
 
-        self._init_ui()
-        self._start_status_polling()
+#         self._init_ui()
+#         self._start_status_polling()
 
-    def _init_ui(self):
-        # 1. Input Section
-        input_frame = ttk.LabelFrame(self, text=" Sync Settings ")
-        input_frame.pack(fill="x", padx=15, pady=10)
+#     def _init_ui(self):
+#         # 1. Input Section
+#         input_frame = ttk.LabelFrame(self, text=" Sync Settings ")
+#         input_frame.pack(fill="x", padx=15, pady=10)
 
-        ttk.Label(input_frame, text="Account ID:").grid(row=0, column=0, padx=10, pady=8, sticky="w")
-        self.ent_account_id = ttk.Entry(input_frame, width=15)
-        self.ent_account_id.insert(0, "1")
-        self.ent_account_id.grid(row=0, column=1, padx=10, pady=8)
+#         ttk.Label(input_frame, text="Account ID:").grid(row=0, column=0, padx=10, pady=8, sticky="w")
+#         self.ent_account_id = ttk.Entry(input_frame, width=15)
+#         self.ent_account_id.insert(0, "1")
+#         self.ent_account_id.grid(row=0, column=1, padx=10, pady=8)
 
-        ttk.Label(input_frame, text="Drive ID:").grid(row=0, column=2, padx=10, pady=8, sticky="w")
-        self.ent_drive_id = ttk.Entry(input_frame, width=20)
-        self.ent_drive_id.insert(0, "root")  # "root" = My Drive
-        self.ent_drive_id.grid(row=0, column=3, padx=10, pady=8)
+#         ttk.Label(input_frame, text="Drive ID:").grid(row=0, column=2, padx=10, pady=8, sticky="w")
+#         self.ent_drive_id = ttk.Entry(input_frame, width=20)
+#         self.ent_drive_id.insert(0, "root")  # "root" = My Drive
+#         self.ent_drive_id.grid(row=0, column=3, padx=10, pady=8)
 
-        # 2. Control Buttons Section
-        btn_frame = ttk.LabelFrame(self, text=" Controls ")
-        btn_frame.pack(fill="x", padx=15, pady=5)
+#         # 2. Control Buttons Section
+#         btn_frame = ttk.LabelFrame(self, text=" Controls ")
+#         btn_frame.pack(fill="x", padx=15, pady=5)
 
-        ttk.Button(btn_frame, text="▶️ Start", command=self.start_sync).grid(row=0, column=0, padx=8, pady=10)
-        ttk.Button(btn_frame, text="⏸️ Pause", command=self.pause_sync).grid(row=0, column=1, padx=8, pady=10)
-        ttk.Button(btn_frame, text="⏯️ Resume", command=self.resume_sync).grid(row=0, column=2, padx=8, pady=10)
-        ttk.Button(btn_frame, text="🛑 Stop", command=self.stop_sync).grid(row=0, column=3, padx=8, pady=10)
+#         ttk.Button(btn_frame, text="▶️ Start", command=self.start_sync).grid(row=0, column=0, padx=8, pady=10)
+#         ttk.Button(btn_frame, text="⏸️ Pause", command=self.pause_sync).grid(row=0, column=1, padx=8, pady=10)
+#         ttk.Button(btn_frame, text="⏯️ Resume", command=self.resume_sync).grid(row=0, column=2, padx=8, pady=10)
+#         ttk.Button(btn_frame, text="🛑 Stop", command=self.stop_sync).grid(row=0, column=3, padx=8, pady=10)
 
-        # 3. Status Dashboard Section
-        status_frame = ttk.LabelFrame(self, text=" Live Sync Status (Database) ")
-        status_frame.pack(fill="both", expand=True, padx=15, pady=10)
+#         # 3. Status Dashboard Section
+#         status_frame = ttk.LabelFrame(self, text=" Live Sync Status (Database) ")
+#         status_frame.pack(fill="both", expand=True, padx=15, pady=10)
 
-        self.lbl_status = ttk.Label(status_frame, text="Status: IDLE", font=("Helvetica", 11, "bold"))
-        self.lbl_status.pack(anchor="w", padx=15, pady=8)
+#         self.lbl_status = ttk.Label(status_frame, text="Status: IDLE", font=("Helvetica", 11, "bold"))
+#         self.lbl_status.pack(anchor="w", padx=15, pady=8)
 
-        self.lbl_files = ttk.Label(status_frame, text="Scanned Files: 0", font=("Helvetica", 10))
-        self.lbl_files.pack(anchor="w", padx=15, pady=3)
+#         self.lbl_files = ttk.Label(status_frame, text="Scanned Files: 0", font=("Helvetica", 10))
+#         self.lbl_files.pack(anchor="w", padx=15, pady=3)
 
-        self.lbl_folders = ttk.Label(status_frame, text="Scanned Folders: 0", font=("Helvetica", 10))
-        self.lbl_folders.pack(anchor="w", padx=15, pady=3)
+#         self.lbl_folders = ttk.Label(status_frame, text="Scanned Folders: 0", font=("Helvetica", 10))
+#         self.lbl_folders.pack(anchor="w", padx=15, pady=3)
 
-        self.lbl_job_id = ttk.Label(status_frame, text="Active Job ID: None", font=("Helvetica", 9), foreground="gray")
-        self.lbl_job_id.pack(anchor="w", padx=15, pady=8)
+#         self.lbl_job_id = ttk.Label(status_frame, text="Active Job ID: None", font=("Helvetica", 9), foreground="gray")
+#         self.lbl_job_id.pack(anchor="w", padx=15, pady=8)
 
-    # UI Button Actions
-    def start_sync(self):
-        try:
-            acc_id = int(self.ent_account_id.get().strip())
-            drive_id = self.ent_drive_id.get().strip()
-            self.sync_mgr.start_sync(account_id=acc_id, drive_id=drive_id)
-        except ValueError:
-            messagebox.showerror("Input Error", "Account ID သည် ကိန်းဂဏန်း (Number) ဖြစ်ရပါမည်။")
+#     # UI Button Actions
+#     def start_sync(self):
+#         try:
+#             acc_id = int(self.ent_account_id.get().strip())
+#             drive_id = self.ent_drive_id.get().strip()
+#             self.sync_mgr.start_sync(account_id=acc_id, drive_id=drive_id)
+#         except ValueError:
+#             messagebox.showerror("Input Error", "Account ID သည် ကိန်းဂဏန်း (Number) ဖြစ်ရပါမည်။")
 
-    def pause_sync(self):
-        drive_id = self.ent_drive_id.get().strip()
-        self.sync_mgr.pause_sync(drive_id)
+#     def pause_sync(self):
+#         drive_id = self.ent_drive_id.get().strip()
+#         self.sync_mgr.pause_sync(drive_id)
 
-    def resume_sync(self):
-        drive_id = self.ent_drive_id.get().strip()
-        self.sync_mgr.resume_sync(drive_id)
+#     def resume_sync(self):
+#         drive_id = self.ent_drive_id.get().strip()
+#         self.sync_mgr.resume_sync(drive_id)
 
-    def stop_sync(self):
-        drive_id = self.ent_drive_id.get().strip()
-        self.sync_mgr.stop_sync(drive_id)
+#     def stop_sync(self):
+#         drive_id = self.ent_drive_id.get().strip()
+#         self.sync_mgr.stop_sync(drive_id)
 
-    # Database ထဲမှ Status ကို 0.5 စက္ကန့်တစ်ကြိမ် Auto Polling ဆွဲယူစစ်ဆေးခြင်း
-    def _start_status_polling(self):
-        drive_id = self.ent_drive_id.get().strip()
-        if drive_id:
-            job = self.db.fetch_one(
-                "SELECT id, status, scanned_files, scanned_folders FROM sync_jobs WHERE drive_id = ? ORDER BY id DESC LIMIT 1",
-                (drive_id,)
-            )
-            if job:
-                status_color = {
-                    "running": "green",
-                    "paused": "orange",
-                    "cancelled": "red",
-                    "completed": "blue",
-                    "failed": "red"
-                }.get(job["status"], "black")
+#     # Database ထဲမှ Status ကို 0.5 စက္ကန့်တစ်ကြိမ် Auto Polling ဆွဲယူစစ်ဆေးခြင်း
+#     def _start_status_polling(self):
+#         drive_id = self.ent_drive_id.get().strip()
+#         if drive_id:
+#             job = self.db.fetch_one(
+#                 "SELECT id, status, scanned_files, scanned_folders FROM sync_jobs WHERE drive_id = ? ORDER BY id DESC LIMIT 1",
+#                 (drive_id,)
+#             )
+#             if job:
+#                 status_color = {
+#                     "running": "green",
+#                     "paused": "orange",
+#                     "cancelled": "red",
+#                     "completed": "blue",
+#                     "failed": "red"
+#                 }.get(job["status"], "black")
 
-                self.lbl_status.config(text=f"Status: {job['status'].upper()}", foreground=status_color)
-                self.lbl_files.config(text=f"Scanned Files: {job['scanned_files']:,}")
-                self.lbl_folders.config(text=f"Scanned Folders: {job['scanned_folders']:,}")
-                self.lbl_job_id.config(text=f"Active Job ID: #{job['id']}")
+#                 self.lbl_status.config(text=f"Status: {job['status'].upper()}", foreground=status_color)
+#                 self.lbl_files.config(text=f"Scanned Files: {job['scanned_files']:,}")
+#                 self.lbl_folders.config(text=f"Scanned Folders: {job['scanned_folders']:,}")
+#                 self.lbl_job_id.config(text=f"Active Job ID: #{job['id']}")
 
-        # 500ms (0.5s) အကြာတွင် Loop ပြန်ပတ်မည်
-        self.after(500, self._start_status_polling)
+#         # 500ms (0.5s) အကြာတွင် Loop ပြန်ပတ်မည်
+#         self.after(500, self._start_status_polling)
 
 
-if __name__ == "__main__":
-    app = SyncTestApp()
-    app.mainloop()
+# if __name__ == "__main__":
+#     app = SyncTestApp()
+#     app.mainloop()
+
+
+# class SyncManager:
+#     def __init__(self, db_manager=None):
+#         self.db = db_manager or DatabaseManager()
+#         self.download_mgr = DownloadManager(db_manager=self.db)
+
+#     def _get_relative_file_path(self, file_name: str, parent_id: str, account_id: int) -> str:
+#         """parent_id အဆင့်ဆင့်ကို လိုက်ရှာပြီး Folder လမ်းကြောင်း (Relative Path) တည်ဆောက်ပေးခြင်း"""
+#         path_parts = [file_name]
+#         current_parent_id = parent_id
+
+#         # parent_id မရှိတော့သည့်အထိ သို့မဟုတ် root ရောက်သည့်အထိ Parent Folder များကို လိုက်ရှာမည်
+#         while current_parent_id and current_parent_id != "root":
+#             folder = self.db.fetch_one(
+#                 "SELECT name, parent_id FROM drive_files WHERE id = ? AND account_id = ?",
+#                 (current_parent_id, account_id)
+#             )
+#             if not folder:
+#                 break
+            
+#             path_parts.append(folder["name"])
+#             current_parent_id = folder.get("parent_id")
+
+#         # [filename, subfolder, mainfolder] မှ [mainfolder, subfolder, filename] သို့ ပြောင်းခြင်း
+#         path_parts.reverse()
+#         return os.path.join(*path_parts)
+
+#     def create_download_job_from_scanned_files(self, account_id: int, download_path: str):
+#         queue_id = self.download_mgr.create_queue(account_id=account_id, title="My Drive Sync Queue")
+        
+#         # parent_id ပါ ရယူရန် Select query တွင် ထည့်သွင်းပါသည်
+#         files = self.db.fetch_all(
+#             "SELECT id, name, mime_type, parent_id FROM drive_files WHERE account_id = ? AND mime_type != 'application/vnd.google-apps.folder'", 
+#             (account_id,)
+#         )
+        
+#         for file in files:
+#             # 1. Folder Path အတိုင်း Relative Path ပြန်ဆောက်မည် (ဥပမာ- "FolderA/SubFolderB/file.pdf")
+#             rel_path = self._get_relative_file_path(file["name"], file.get("parent_id"), account_id)
+            
+#             # 2. Save Path နှင့် ပေါင်းစပ်မည် (ဥပမာ- "D:/nex/FolderA/SubFolderB/file.pdf")
+#             dest_file_path = os.path.join(download_path, rel_path)
+#             temp_file_path = dest_file_path + ".tmp"
+
+#             # 3. ဖိုင်ကျမည့် Folder မရှိသေးပါက Local Disk ပေါ်တွင် Folder ကို အလိုအလျောက် ဆောက်ပေးမည်
+#             os.makedirs(os.path.dirname(dest_file_path), exist_ok=True)
+            
+#             export_mime = None
+#             if "vnd.google-apps.document" in file["mime_type"]:
+#                 export_mime = "application/pdf"
+#             elif "vnd.google-apps.spreadsheet" in file["mime_type"]:
+#                 export_mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+#             self.download_mgr.add_item_to_queue(
+#                 queue_id=queue_id,
+#                 drive_file_id=file["id"],
+#                 destination_path=dest_file_path,
+#                 temp_path=temp_file_path,
+#                 export_mime_type=export_mime
+#             )
+
+#         self.download_mgr.start_queue(queue_id)
+#         return queue_id
+
