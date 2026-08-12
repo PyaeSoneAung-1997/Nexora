@@ -247,3 +247,4 @@ class DriveScanner:
 
             self.db.execute_query("UPDATE drives SET status = 'failed' WHERE drive_id = ?", (drive_id,))
             raise e
+    
