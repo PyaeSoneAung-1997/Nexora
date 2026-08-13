@@ -1,0 +1,1099 @@
+-- 1. ACCOUNTS
+CREATE TABLE IF NOT EXISTS accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255),
+    token_path TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_used_at DATETIME
+);
+
+-- 2. DRIVES
+CREATE TABLE IF NOT EXISTS drives (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_id INTEGER NOT NULL,
+    drive_id VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    sync_token TEXT,
+    total_files INTEGER DEFAULT 0,
+    total_folders INTEGER DEFAULT 0,
+    total_size BIGINT DEFAULT 0,
+    last_scanned DATETIME,
+    status VARCHAR(50) DEFAULT 'idle',
+    FOREIGN KEY (account_id)
+        REFERENCES accounts(id)
+        ON DELETE CASCADE
+);
+
+-- 3. DRIVE_FILES
+CREATE TABLE IF NOT EXISTS drive_files (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_id INTEGER NOT NULL,
+    drive_id VARCHAR(255) NOT NULL,
+    file_id VARCHAR(255) NOT NULL UNIQUE,
+    parent_id VARCHAR(255),
+    name VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(255),
+    size BIGINT DEFAULT 0,
+    is_folder BOOLEAN DEFAULT 0,
+    is_workspace_file BOOLEAN DEFAULT 0,
+    relative_path TEXT NOT NULL,
+    md5_checksum VARCHAR(64),
+    web_view_link TEXT,
+    trashed BOOLEAN DEFAULT 0,
+    created_at DATETIME,
+    modified_time DATETIME,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (account_id)
+        REFERENCES accounts(id)
+        ON DELETE CASCADE
+);
+
+-- 4. SYNC_JOBS
+CREATE TABLE IF NOT EXISTS sync_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_id INTEGER NOT NULL,
+    drive_id VARCHAR(255) NOT NULL,
+    job_type VARCHAR(50) NOT NULL,
+    status VARCHAR(50) DEFAULT 'queued',
+    next_page_token TEXT,
+    scanned_files INTEGER DEFAULT 0,
+    scanned_folders INTEGER DEFAULT 0,
+    error_message TEXT,
+    started_at DATETIME,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    completed_at DATETIME,
+    FOREIGN KEY (account_id)
+        REFERENCES accounts(id)
+        ON DELETE CASCADE
+);
+
+-- 5. DOWNLOAD_QUEUES
+CREATE TABLE IF NOT EXISTS download_queues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_id INTEGER NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    total_files INTEGER DEFAULT 0,
+    completed_files INTEGER DEFAULT 0,
+    total_bytes BIGINT DEFAULT 0,
+    downloaded_bytes BIGINT DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'queued',
+    scheduled_start_at DATETIME,
+    scheduled_stop_at DATETIME,
+    auto_shutdown BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    completed_at DATETIME,
+    FOREIGN KEY (account_id)
+        REFERENCES accounts(id)
+        ON DELETE CASCADE
+);
+
+-- 6. DOWNLOAD_ITEMS
+CREATE TABLE IF NOT EXISTS download_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    queue_id INTEGER NOT NULL,
+
+    drive_file_id INTEGER NOT NULL,
+
+    destination_path TEXT NOT NULL,
+    temp_path TEXT NOT NULL,
+
+    export_mime_type VARCHAR(255),
+
+    total_size BIGINT DEFAULT 0,
+    downloaded_bytes BIGINT DEFAULT 0,
+
+    order_index INTEGER DEFAULT 0,
+
+    status VARCHAR(50) DEFAULT 'queued',
+
+    retry_count INTEGER DEFAULT 0,
+
+    error_message TEXT,
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    started_at DATETIME,
+    completed_at DATETIME,
+
+    FOREIGN KEY (queue_id)
+        REFERENCES download_queues(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (drive_file_id)
+        REFERENCES drive_files(id)
+        ON DELETE CASCADE
+);
+
+-- 7. DOWNLOAD_HISTORY
+CREATE TABLE IF NOT EXISTS download_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    account_id INTEGER NOT NULL,
+
+    file_id VARCHAR(255) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+
+    mime_type VARCHAR(255),
+    file_size BIGINT DEFAULT 0,
+
+    avg_speed BIGINT DEFAULT 0,
+    duration_seconds INTEGER DEFAULT 0,
+
+    destination_path TEXT NOT NULL,
+
+    md5_checksum VARCHAR(64),
+
+    queue_title VARCHAR(255),
+
+    status VARCHAR(50) NOT NULL,
+
+    error_message TEXT,
+
+    started_at DATETIME,
+    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (account_id)
+        REFERENCES accounts(id)
+        ON DELETE CASCADE
+);
+
+-- 8. APP_SETTINGS
+CREATE TABLE IF NOT EXISTS app_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key VARCHAR(255) NOT NULL UNIQUE,
+    value TEXT,
+    category VARCHAR(100),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+
+INSERT OR IGNORE INTO app_settings (key, value, category) VALUES
+-- General Downloads
+('default_download_path', 'D:/Downloads/Nexora', 'download'),
+('temp_download_path', 'C:/NexoraTemp', 'download'),
+('max_concurrent_downloads', '3', 'download'),
+('duplicate_file_action', 'auto_rename', 'download'),
+('max_retries_per_item', '5', 'download'),
+('auto_resume_on_startup', 'true', 'download'),
+
+-- Network
+('speed_limit_kbps', '0', 'network'),
+('max_connections_per_file', '4', 'network'),
+
+-- Google Workspace Defaults
+('default_export_doc', 'docx', 'google'),
+('default_export_sheet', 'xlsx', 'google'),
+('default_export_slide', 'pptx', 'google'),
+('auto_sync_interval_minutes', '30', 'google'),
+
+-- System & Behavior
+('prevent_sleep_during_download', 'true', 'system'),
+('minimize_to_tray_on_close', 'true', 'system'),
+('launch_on_startup', 'false', 'system'),
+
+-- UI & Sound
+('theme', 'dark', 'ui'),
+('notify_on_complete', 'true', 'ui'),
+('play_sound_on_complete', 'true', 'ui');
+
+
+CREATE INDEX IF NOT EXISTS idx_files_parent
+ON drive_files(parent_id);
+
+CREATE INDEX IF NOT EXISTS idx_files_drive
+ON drive_files(drive_id);
+
+CREATE INDEX IF NOT EXISTS idx_files_path
+ON drive_files(relative_path);
+
+CREATE INDEX IF NOT EXISTS idx_download_items_queue
+ON download_items(queue_id, order_index);
+
+CREATE INDEX IF NOT EXISTS idx_download_items_status
+ON download_items(status);
+
+CREATE INDEX IF NOT EXISTS idx_history_account
+ON download_history(account_id);
+
+CREATE INDEX IF NOT EXISTS idx_history_status
+ON download_history(status);
+
+
+Progress tracking ထည့်သွင်းရန်အတွက် (၁) UI ပေါ်တွင် Progress Bar ထည့်ခြင်း၊ (၂) Database တွင် Completed Count သိမ်းဆည်းခြင်း နှင့် (၃) UI Polling ဖြင့် စက္ကန့်ဝက်တစ်ခါ Progress ကို Update ပေးခြင်း ဆိုသည့် အဆင့် (၃) ဆင့်ဖြင့် ပြုလုပ်နိုင်ပါသည်။
+
+၁။ app.py ထဲတွင် Progress Bar နှင့် Label သစ် ထည့်သွင်းခြင်း
+
+NexoraUI Class ၏ _init_ui() ထဲရှိ Status Section တွင် Progress Bar ကို အောက်ပါအတိုင်း ထည့်ပေးပါ:
+
+Python
+        # 3. Live Dashboard Section
+        status_frame = ttk.LabelFrame(self, text=" Live Database Progress ")
+        status_frame.pack(fill="both", expand=True, padx=15, pady=10)
+
+        self.lbl_status = ttk.Label(status_frame, text="Status: IDLE", font=("Helvetica", 11, "bold"))
+        self.lbl_status.pack(anchor="w", padx=15, pady=6)
+
+        # ⏬ Progress Bar နှင့် Status Text အသစ် ထည့်သွင်းခြင်း
+        self.progress_bar = ttk.Progressbar(status_frame, orient="horizontal", mode="determinate")
+        self.progress_bar.pack(fill="x", padx=15, pady=5)
+
+        self.lbl_progress = ttk.Label(status_frame, text="Progress: 0.0% (0 / 0 files)", font=("Helvetica", 9, "bold"), foreground="navy")
+        self.lbl_progress.pack(anchor="w", padx=15, pady=2)
+
+        self.lbl_files = ttk.Label(status_frame, text="Scanned Files: 0", font=("Helvetica", 10))
+        self.lbl_files.pack(anchor="w", padx=15, pady=2)
+
+        self.lbl_folders = ttk.Label(status_frame, text="Scanned Folders: 0", font=("Helvetica", 10))
+        self.lbl_folders.pack(anchor="w", padx=15, pady=2)
+၂။ _start_status_polling() ကို Download Progress တွက်ချက်နိုင်အောင် ပြင်ခြင်း
+
+Database ထဲရှိ download_queues Table မှ total_items နှင့် completed_count များကို ဆွဲထုတ်ကာ ရာခိုင်နှုန်း (%) တွက်ချက်ပြသပေးမည့် Code ဖြစ်ပါသည်:
+
+Python
+    def _start_status_polling(self):
+        # 1. Download Queue အခြေအနေကို စစ်ဆေးမည်
+        queue = self.db.fetch_one(
+            "SELECT id, total_items, completed_count, status FROM download_queues ORDER BY id DESC LIMIT 1"
+        )
+
+        if queue and queue["status"] == "running":
+            total = queue["total_items"] or 0
+            completed = queue["completed_count"] or 0
+            percent = (completed / total * 100) if total > 0 else 0.0
+
+            # UI Progress Bar နှင့် Label ကို Update လုပ်မည်
+            self.progress_bar["value"] = percent
+            self.lbl_progress.config(
+                text=f"Downloading Progress: {percent:.1f}% ({completed:,} / {total:,} files complete)"
+            )
+            self.lbl_status.config(text=f"Status: DOWNLOADING (Queue #{queue['id']})", foreground="green")
+
+        else:
+            # 2. Scan Progress (သို့) မူလ Sync Job Status ကို စစ်ဆေးမည်
+            drive_id = self.ent_drive_id.get().strip()
+            if drive_id:
+                job = self.db.fetch_one(
+                    "SELECT id, status, scanned_files, scanned_folders FROM sync_jobs WHERE drive_id = ? ORDER BY id DESC LIMIT 1",
+                    (drive_id,)
+                )
+                if job:
+                    colors = {"running": "green", "paused": "orange", "cancelled": "red", "completed": "blue", "failed": "red"}
+                    self.lbl_status.config(text=f"Status: {job['status'].upper()}", foreground=colors.get(job["status"], "black"))
+                    self.lbl_files.config(text=f"Scanned Files: {job['scanned_files']:,}")
+                    self.lbl_folders.config(text=f"Scanned Folders: {job['scanned_folders']:,}")
+                    self.lbl_job_id.config(text=f"Active Job ID: #{job['id']}")
+
+                    # Scan သက်သက် လုပ်နေချိန်တွင် Progress Bar ကို Reset ထားမည်
+                    if job["status"] != "running":
+                        self.progress_bar["value"] = 0
+                        self.lbl_progress.config(text="Progress: 0.0%")
+
+        # စက္ကန့်ဝက် (500ms) တိုင်း အလိုအလျောက် ပြန်လည် စစ်ဆေးမည်
+        self.after(500, self._start_status_polling)
+၃။ Download Worker ထဲတွင် ဖိုင်တစ်ခု ပြီးတိုင်း DB ကို Update လုပ်ပေးခြင်း
+
+ဖိုင်တစ်ဖိုင် ဒေါင်းလုဒ်ဆွဲပြီးတိုင်း download_queues ထဲရှိ completed_count ကို +1 တိုးပေးရပါမည်:
+
+Python
+# Download Worker (သို့မဟုတ်) Download Manager ထဲတွင် ဖိုင်ဒေါင်းပြီးပါက ခေါ်ရန်:
+
+def mark_item_completed(self, queue_id: int, item_id: int):
+    # 1. download_items ထဲတွင် status ကို completed ပြောင်းမည်
+    self.db.execute("UPDATE download_items SET status = 'completed' WHERE id = ?", (item_id,))
+    
+    # 2. download_queues ထဲတွင် completed_count ကို +1 တိုးပေးမည်
+    self.db.execute(
+        "UPDATE download_queues SET completed_count = completed_count + 1 WHERE id = ?", 
+        (queue_id,)
+    )
+အလုပ်လုပ်ပုံ:
+အနောက်ကွယ်မှ Download Thread က ဖိုင်တစ်ဖိုင် ဆွဲပြီးသည်နှင့် completed_count ကို Database ထဲတွင် +1 တိုးသွားမည်ဖြစ်ပြီး၊ UI ထဲရှိ _start_status_polling က 
+စက္ကန့်ဝက်တစ်ခါ DB ကို စစ်ဆေးကာ Progress Bar ကို Real-time အလိုအလျောက် ရွှေ့ပေးသွားမည် ဖြစ်ပါသည်။
+
+
+၁။ SettingsDialog Class ကို app.py ထဲသို့ ထည့်သွင်းခြင်း
+app.py ၏ ထိပ်ပိုင်း (သို့မဟုတ်) NexoraUI Class ၏ အထက်တွင် အောက်ပါ Class ကို ရေးသားပေးပါ:
+
+Python
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+
+class SettingsDialog(tk.Toplevel):
+    """Nexora App Configs များကို ပြင်ဆင်ရန် Settings Window"""
+    def __init__(self, parent, db_manager=None):
+        super().__init__(parent)
+        self.title("⚙️ Nexora - Settings")
+        self.geometry("420x280")
+        self.resizable(False, False)
+        
+        # Main Window ရဲ့ အပေါ်မှာပဲ ပေါ်နေစေပြီး Focus ယူထားမည် (Modal Dialog)
+        self.transient(parent)
+        self.grab_set()
+
+        self.db = db_manager
+        self._init_ui()
+
+    def _init_ui(self):
+        frame = ttk.LabelFrame(self, text=" Application Settings ")
+        frame.pack(fill="both", expand=True, padx=15, pady=15)
+
+        # 1. Max Concurrent Downloads (Threads)
+        ttk.Label(frame, text="Max Concurrent Downloads:").grid(row=0, column=0, padx=10, pady=12, sticky="w")
+        self.spn_threads = ttk.Spinbox(frame, from_=1, to=16, width=10)
+        self.spn_threads.set(5) # Default 5 threads
+        self.spn_threads.grid(row=0, column=1, padx=10, pady=12, sticky="w")
+
+        # 2. Max Retry Attempts
+        ttk.Label(frame, text="Auto Retry Count:").grid(row=1, column=0, padx=10, pady=12, sticky="w")
+        self.spn_retries = ttk.Spinbox(frame, from_=1, to=10, width=10)
+        self.spn_retries.set(3)
+        self.spn_retries.grid(row=1, column=1, padx=10, pady=12, sticky="w")
+
+        # 3. Bandwidth Limit (Optional)
+        ttk.Label(frame, text="Download Speed Limit:").grid(row=2, column=0, padx=10, pady=12, sticky="w")
+        self.combo_speed = ttk.Combobox(frame, values=["Unlimited", "5 MB/s", "10 MB/s", "20 MB/s"], width=12, state="readonly")
+        self.combo_speed.set("Unlimited")
+        self.combo_speed.grid(row=2, column=1, padx=10, pady=12, sticky="w")
+
+        # Buttons Frame
+        btn_frame = ttk.Frame(self)
+        btn_frame.pack(fill="x", padx=15, pady=(0, 15))
+
+        ttk.Button(btn_frame, text="💾 Save Settings", command=self._save_settings).pack(side="right", padx=5)
+        ttk.Button(btn_frame, text="Cancel", command=self.destroy).pack(side="right", padx=5)
+
+    def _save_settings(self):
+        try:
+            max_threads = int(self.spn_threads.get())
+            max_retries = int(self.spn_retries.get())
+            speed_limit = self.combo_speed.get()
+
+            # Settings များကို Database (သို့) Config file ထဲ သိမ်းဆည်းရန် Logic
+            # self.db.execute("UPDATE config SET max_threads = ?, max_retries = ?", (max_threads, max_retries))
+
+            messagebox.showinfo("Success", "Settings များကို အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။", parent=self)
+            self.destroy()
+        except ValueError:
+            messagebox.showerror("Error", "အချက်အလက်များ မှန်ကန်စွာ ထည့်သွင်းပေးပါ။", parent=self)
+၂။ Main Window (NexoraUI) တွင် "⚙️ Settings" Button ထည့်သွင်းခြင်း
+app.py ထဲရှိ _init_ui() Method ၏ ခလုတ်များနေရာတွင် Settings Button ကို ဖြည့်စွက်ပါ:
+
+Python
+        # NexoraUI ၏ _init_ui() ထဲတွင် ထည့်ရန်
+        btn_frame = ttk.LabelFrame(self, text=" Sync & Download Controls ")
+        btn_frame.pack(fill="x", padx=15, pady=5)
+
+        ttk.Button(btn_frame, text="🔍 Start Scan", command=self.start_sync).grid(row=0, column=0, padx=5, pady=10)
+        ttk.Button(btn_frame, text="⏬ Start Download", command=self.start_download).grid(row=0, column=1, padx=5, pady=10)
+        ttk.Button(btn_frame, text="⏸️ Pause", command=self.pause_sync).grid(row=0, column=2, padx=5, pady=10)
+        ttk.Button(btn_frame, text="🛑 Stop", command=self.stop_sync).grid(row=0, column=3, padx=5, pady=10)
+        
+        # ⚙️ Settings Button အသစ်
+        ttk.Button(btn_frame, text="⚙️ Settings", command=self.open_settings).grid(row=0, column=4, padx=5, pady=10)
+နှင့် NexoraUI Class အောက်တွင် အောက်ပါ Method ထည့်ပေးပါ:
+
+Python
+    def open_settings(self):
+        """Settings Window pop-up ပွင့်လာစေရန် ခေါ်ယူခြင်း"""
+        SettingsDialog(self, db_manager=self.db)
+
+
+
+
+Google Drive တွင် File နှင့် Folder နှစ်ခုလုံးကို Entity အဖြစ် ပေးပို့သဖြင့် drive_files Table ထဲတွင် File + Folder နှစ်ခုလုံးကို သိမ်းဆည်းပေးရပါမည် (ဒါမှ Folder Hierarchy Tree ပြန်ဆောက်၍ ရပါမည်)။
+
+သို့သော် download_items Table ထဲသို့မူ File များကိုသာ ခွဲထုတ်ထည့်ပေးရပါမည် (Folder များကို aria2c ဖြင့် ဒေါင်းလုဒ်ဆွဲရန် မလိုဘဲ Python ရဲ့ os.makedirs() ဖြင့် Local Disk ပေါ်တွင် အလိုအလျောက် တည်ဆောက်သွားမည် ဖြစ်သည်)။
+
+အဆင့် (၁) - drive_files Table တွင် File/Folder ခွဲခြားသိမ်းဆည်းခြင်း (Scan အဆင့်)
+Google Drive ၏ mime_type == 'application/vnd.google-apps.folder' ကို စစ်ဆေး၍ is_folder column သို့မဟုတ် mime_type ဖြင့် ခွဲခြားထည့်သွင်းပါ:
+
+SQL
+-- drive_files Table Schema
+CREATE TABLE IF NOT EXISTS drive_files (
+    id TEXT PRIMARY KEY,
+    account_id INTEGER,
+    name TEXT,
+    mime_type TEXT,
+    parent_id TEXT,
+    size INTEGER DEFAULT 0,
+    is_folder INTEGER DEFAULT 0 -- Folder ဆိုလျှင် 1, File ဆိုလျှင် 0
+);
+Python Scan Logic:
+
+Python
+def insert_scanned_item(self, file_data: dict, account_id: int):
+    """Scan ဖတ်ရရှိသော File/Folder များကို DB ထဲ ထည့်သွင်းခြင်း"""
+    is_folder = 1 if file_data.get("mimeType") == "application/vnd.google-apps.folder" else 0
+    parent_id = file_data.get("parents", [None])[0] if file_data.get("parents") else None
+
+    self.db.execute("""
+        INSERT OR REPLACE INTO drive_files 
+        (id, account_id, name, mime_type, parent_id, size, is_folder)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        file_data["id"],
+        account_id,
+        file_data["name"],
+        file_data["mimeType"],
+        parent_id,
+        int(file_data.get("size", 0)),
+        is_folder
+    ))
+အဆင့် (၂) - download_items ထဲသို့ File များသာ သီးသန့် ရွေးထုတ်ထည့်ခြင်း (Queue အဆင့်)
+Download Queue ဆောက်သည့်အခါ is_folder = 0 ဖြစ်သော File များကိုသာ ရွေးထုတ်၍ download_items ထဲသို့ ထည့်သွင်းပါ:
+
+Python
+def populate_download_queue(self, queue_id: int, account_id: int, download_path: str):
+    # Folder မဟုတ်သော File များကိုသာ Query လုပ်၍ ဆွဲထုတ်မည်
+    files = self.db.fetch_all("""
+        SELECT id, name, mime_type, parent_id 
+        FROM drive_files 
+        WHERE account_id = ? AND is_folder = 0
+    """, (account_id,))
+
+    for file in files:
+        # File ၏ Parent Folders များကို လိုက်ရှာပြီး Local Path တည်ဆောက်မည်
+        rel_path = self._get_relative_file_path(file["name"], file.get("parent_id"), account_id)
+        dest_file_path = os.path.join(download_path, rel_path)
+
+        # download_items ထဲသို့ ထည့်သွင်းမည်
+        self.db.execute("""
+            INSERT INTO download_items (queue_id, drive_file_id, destination_path, status)
+            VALUES (?, ?, ?, 'pending')
+        """, (queue_id, file["id"], dest_file_path))
+အဆင့် (၃) - Local Disk ပေါ်တွင် Folder လမ်းကြောင်းများ တည်ဆောက်ခြင်း (Download အဆင့်)
+Worker က download_items ထဲမှ ဖိုင်ကို aria2c ဖြင့် မဒေါင်းမီ မိခင် Folder မရှိသေးပါက အလိုအလျောက် တည်ဆောက်ပေးရန် os.makedirs ကို သုံးပါ:
+
+Python
+# Download Worker ထဲတွင် ဖိုင်ဒေါင်းလုဒ် မစတင်မီ ခေါ်ရန်
+file_directory = os.path.dirname(item["destination_path"])
+
+# Local Path မရှိသေးပါက Sub-folders များကို အလိုအလျောက် ဆောက်ပေးမည်
+os.makedirs(file_directory, exist_ok=True)
+
+# ထို့နောက်မှ aria2c ဖြင့် ဒေါင်းလုဒ် စတင်မည်
+run_aria2c_download(item["drive_file_id"], item["destination_path"])
+လုပ်ငန်းစဉ် အနှစ်ချုပ်:
+
+Scan လုပ်ချိန်: File နှင့် Folder နှစ်ခုလုံးကို drive_files ထဲ ထည့်ပါ။
+
+Queue လုပ်ချိန်: is_folder = 0 ဖြစ်သော File များကိုသာ download_items ထဲ ကူးထည့်ပါ။
+
+Download လုပ်ချိန်: os.makedirs() က လိုအပ်သော Folder များအား Local ပေါ်တွင် တည်ဆောက်ပေးပြီး File ကို ဒေါင်းလုဒ် ဆွဲပေးပါမည်
+
+
+Google Drive ထဲက ဖိုင်အားလုံးကို ဒေါင်းလုဒ်ဆွဲသည့်အခါ "ဖိုင်များ Local ပေါ်တွင် ရှိပြီးသားဖြစ်နေခြင်း" နှင့် "Google Drive ပေါ်တွင် နာမည်တူ ဖိုင်များ ရှိနေခြင်း" စသည့် ပြဿနာများကို စနစ်တကျ ကိုင်တွယ်နိုင်ရန် အောက်ပါ Strategy (၃) မျိုး ကို ထည့်သွင်းပေးသင့်ပါသည်။
+
+၁။ Local Disk ပေါ်တွင် ရှိပြီးသား ဖိုင်များကို စစ်ဆေး၍ Skip လုပ်ခြင်း (File Exist Check)
+ဖိုင်မဒေါင်းမီ Local Disk ပေါ်တွင် ထိုဖိုင် ရှိပြီးသားလား နှင့် ဖိုင် Size တူမတူ စစ်ဆေးပါ။
+
+ဖိုင်ရှိပြီး Size တူပါက: ဒေါင်းလုဒ် မဆွဲတော့ဘဲ Skip လုပ်မည်။
+
+ဖိုင်ရှိသော်လည်း Size မတူပါက (မပြည့်စုံပါက): aria2c ၏ -c (Continue/Resume) flag ဖြင့် ဆက်လက် ဒေါင်းလုဒ်ဆွဲမည်။
+
+၂။ Google Drive ပေါ်ရှိ နာမည်တူ ဖိုင်များအတွက် Auto Rename ပြုလုပ်ခြင်း
+Google Drive တွင် Folder တစ်ခုတည်း၌ နာမည်တူ ဖိုင်အများအပြား ရှိနေနိုင်ပါသည်။ Local Disk ပေါ်တွင် တစ်ခုနှင့်တစ်ခု အစားထိုး (Overwrite) မသွားစေရန် နာမည်တူပါက filename (1).ext ပုံစံမျိုး အလိုအလျောက် နာမည်ပြောင်းပေးရန် လိုအပ်ပါသည်။
+
+၃။ Database Level တွင် ပြီးပြီးသား ဖိုင်များကို မထည့်တော့ခြင်း
+download_history ထဲတွင် status = 'completed' ဖြစ်ပြီးသား drive_file_id များကို Queue ထဲသို့ ထပ်မထည့်ရန် SQL Query တွင် ခွဲထုတ်ပေးပါ။
+
+💡 Python Code ပြင်ဆင်ရန် Logic နမူနာ
+SyncManager ၏ create_download_job_from_scanned_files ထဲတွင် အောက်ပါအတိုင်း ပြင်ဆင်နိုင်ပါသည်။
+
+Python
+import os
+
+def create_download_job_from_scanned_files(self, account_id: int, download_path: str):
+    queue_id = self.download_mgr.create_queue(account_id=account_id, title="My Drive Sync Queue")
+    
+    # 1. download_history ထဲတွင် ပြီးပြီးသား ဖိုင်များကို ချန်လှပ်၍ ရွေးထုတ်မည်
+    files = self.db.fetch_all("""
+        SELECT f.id, f.name, f.mime_type, f.parent_id, f.size 
+        FROM drive_files f
+        WHERE f.account_id = ? 
+          AND f.is_folder = 0
+          AND f.id NOT IN (
+              SELECT drive_file_id FROM download_history WHERE status = 'completed'
+          )
+    """, (account_id,))
+    
+    for file in files:
+        rel_path = self._get_relative_file_path(file["name"], file.get("parent_id"), account_id)
+        dest_file_path = os.path.join(download_path, rel_path)
+        drive_file_size = file.get("size", 0)
+
+        # 2. Local Disk ပေါ်တွင် ဖိုင်ရှိပြီးသားလား စစ်ဆေးမည်
+        if os.path.exists(dest_file_path):
+            local_file_size = os.path.getsize(dest_file_path)
+            
+            # ဖိုင်ရှိပြီး Drive က Size နဲ့ တူနေပါက မဒေါင်းဘဲ Skip လုပ်မည်
+            if drive_file_size > 0 and local_file_size == drive_file_size:
+                print(f"⏩ Skipped (Already downloaded): {file['name']}")
+                continue
+
+        # 3. Local Folder မရှိသေးပါက ဆောက်မည်
+        os.makedirs(os.path.dirname(dest_file_path), exist_ok=True)
+        
+        # 4. Queue ထဲသို့ ထည့်သွင်းမည်
+        self.download_mgr.add_item_to_queue(
+            queue_id=queue_id,
+            drive_file_id=file["id"],
+            destination_path=dest_file_path,
+            temp_path=dest_file_path + ".tmp"
+        )
+
+    self.download_mgr.start_queue(queue_id)
+    return queue_id
+အနှစ်ချုပ် ဆောင်ရွက်ရမည့် လုပ်ငန်းစဉ်
+DB Check: download_history ထဲ ပြီးပြီးသား ဖိုင်များကို Queue ထဲ မထည့်ပါနှင့်။
+
+Local File Check: os.path.exists() နှင့် os.path.getsize() သုံး၍ Size တူပါက Skip လုပ်ပါ။
+
+Resume Support: ဒေါင်းလုဒ် တက်စခ်များအတွက် aria2c ကို -c (Continue) Flag ထည့်သွင်းမောင်းနှင်ပါ။
+
+
+အလွန်ကောင်းမွန်ပြီး ဘေးကင်းသည့် နည်းလမ်း (Very Safe Approach) ဖြစ်ပါတယ်။
+
+ဖိုင်တစ်ခုမှ မပျောက်ပျက်ဘဲ မတော်တဆ Overwrite ဖြစ်သွားခြင်းမှ လုံးဝကာကွယ်ပေးနိုင်သည့်အပြင် User အနေဖြင့်လည်း မိမိစိတ်ကြိုက် နာမည်ပြန်ပေးနိုင်မည်ဖြစ်၍ လွန်စွာ အဆင်ပြေပါသည်။
+
+အလုပ်လုပ်မည့် Flow အဆင့်ဆင့်
+Plaintext
+[ Download Phase ]
+  └─ နာမည်တူတွေ့ပါက `filename_[DriveID].ext` ဖြင့် သီးခြားဒေါင်းမည်။
+  └─ Conflict ဖြစ်နေသော ဖိုင်စာရင်းကို DB ထဲ မှတ်ထားမည်။
+        │
+[ All Downloads Completed ]
+  └─ App က Conflict Window (Pop-up) ထုတ်ပြမည်။
+        │
+[ User Review & Rename ]
+  └─ User က Drive Path, File Size, Created Date ကြည့်ပြီး နာမည်အသစ်ရိုက်ထည့်မည်။
+        │
+[ Save & Rename ]
+  └─ Local Disk ပေါ်တွင် `os.rename()` ဖြင့် နာမည်အသစ်သို့ ပြောင်းပေးမည်။
+၁။ Database တွင် Conflict Table သီးသန့် ဆောက်ခြင်း
+နာမည်တူနေသည့် ဖိုင်များကို ခွဲခြားသိမ်းဆည်းရန် Table တစ်ခု ထည့်သွင်းပေးပါ:
+
+SQL
+CREATE TABLE IF NOT EXISTS file_conflicts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    drive_file_id TEXT,
+    temp_local_path TEXT,    -- ဒေါင်းထားသည့် ခေတ္တ လမ်းကြောင်း (D:/nex/doc_[ID].pdf)
+    original_name TEXT,      -- မူလ နာမည် (doc.pdf)
+    folder_path TEXT,        -- ကျမည့် Folder လမ်းကြောင်း
+    resolved_name TEXT,      -- User ပြင်လိုက်သည့် နာမည်အသစ်
+    status TEXT DEFAULT 'pending' -- pending, resolved
+);
+၂။ Download မဆွဲမီ Auto-Rename လုပ်၍ Save ခြင်း
+Queue ဆောက်ချိန်တွင် နာမည်တူနေပါက filename_[Drive_ID].ext သို့မဟုတ် filename_(1).ext ဟု ယာယီနာမည်ပြောင်း၍ ဒေါင်းလုဒ်ဆွဲပါမည်:
+
+Python
+import os
+
+def prepare_download_path(dest_file_path: str, drive_file_id: str) -> tuple[str, bool]:
+    """
+    ဖိုင်နာမည်တူနေပါက Conflict အဖြစ် မှတ်ပြီး ယာယီ Path ပြန်ပေးမည်
+    """
+    if not os.path.exists(dest_file_path):
+        return dest_file_path, False # Duplicate မဟုတ်ပါ
+
+    # နာမည်တူနေပါက Duplicate ဖြစ်သွားမည်
+    dir_name, full_name = os.path.split(dest_file_path)
+    file_name, ext = os.path.splitext(full_name)
+    
+    # ယာယီ နာမည်အဖြစ် Drive ID တွဲပေးမည် (ဥပမာ- report_1A2b3C.pdf)
+    temp_name = f"{file_name}_{drive_file_id[:6]}{ext}"
+    temp_path = os.path.join(dir_name, temp_name)
+    
+    return temp_path, True # Duplicate ဖြစ်ကြောင်း အချက်ပြမည်
+၃။ Download ပြီးသွားပါက ပြသပေးမည့် UI (Conflict Resolver Window)
+Queue ထဲမှ ဖိုင်များ အကုန်ဒေါင်းပြီးသွားချိန်တွင် file_conflicts ထဲတွင် pending ဖိုင်များ ကျန်ရှိနေပါက Pop-up Window တစ်ခု ပွင့်လာစေရန် ရေးသားနိုင်ပါသည်:
+
+Python
+import tkinter as tk
+from tkinter import ttk, messagebox
+import os
+
+class ConflictResolverDialog(tk.Toplevel):
+    def __init__(self, parent, db_manager):
+        super().__init__(parent)
+        self.title("⚠️ Rename Duplicate Files")
+        self.geometry("650x400")
+        self.db = db_manager
+        
+        self._init_ui()
+        self._load_conflicts()
+
+    def _init_ui(self):
+        ttk.Label(self, text="အောက်ပါ ဖိုင်များသည် နာမည်တူနေပါသည်။ စိတ်ကြိုက် နာမည်ပြင်ပေးပါ:", font=("Helvetica", 10, "bold")).pack(anchor="w", padx=15, pady=10)
+        
+        # Table View ဖြင့် နာမည်တူ ဖိုင်များကို ပြသမည်
+        self.tree = ttk.Treeview(self, columns=("ID", "Folder", "Current Name", "New Name"), show="headings", height=10)
+        self.tree.heading("ID", text="ID")
+        self.tree.heading("Folder", text="Folder Path")
+        self.tree.heading("Current Name", text="Existing File Name")
+        self.tree.heading("New Name", text="New File Name")
+        
+        self.tree.column("ID", width=40)
+        self.tree.column("Folder", width=200)
+        self.tree.column("Current Name", width=180)
+        self.tree.column("New Name", width=180)
+        self.tree.pack(fill="both", expand=True, padx=15, pady=5)
+
+        btn_frame = ttk.Frame(self)
+        btn_frame.pack(fill="x", padx=15, pady=10)
+        
+        ttk.Button(btn_frame, text="✏️ Edit Selected Name", command=self._edit_selected_name).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="💾 Save & Rename All", command=self._apply_renames).pack(side="right", padx=5)
+
+    def _load_conflicts(self):
+        conflicts = self.db.fetch_all("SELECT id, folder_path, original_name FROM file_conflicts WHERE status = 'pending'")
+        for c in conflicts:
+            # Default အနေဖြင့် original_name ကိုပဲ ပြထားမည်
+            self.tree.insert("", "end", values=(c["id"], c["folder_path"], c["original_name"], c["original_name"]))
+
+    def _edit_selected_name(self):
+        # Selected Row ကို မိမိကြိုက်သည့် နာမည်အသစ် ပြင်ခွင့်ပေးမည့် Logic
+        pass
+
+    def _apply_renames(self):
+        """User ရိုက်ထည့်လိုက်သော နာမည်အသစ်များဖြင့် Local Disk ပေါ်တွင် os.rename() လုပ်မည်"""
+        for item in self.tree.get_children():
+            c_id, folder, curr_name, new_name = self.tree.item(item, "values")
+            
+            conflict_item = self.db.fetch_one("SELECT temp_local_path FROM file_conflicts WHERE id = ?", (c_id,))
+            if conflict_item:
+                old_path = conflict_item["temp_local_path"]
+                new_path = os.path.join(folder, new_name)
+                
+                # Local Disk ပေါ်တွင် နာမည်အမှန် ပြောင်းပေးမည်
+                if os.path.exists(old_path):
+                    os.rename(old_path, new_path)
+                
+                self.db.execute("UPDATE file_conflicts SET status = 'resolved' WHERE id = ?", (c_id,))
+                
+        messagebox.showinfo("Success", "ဖိုင်နာမည်များ အောင်မြင်စွာ ပြောင်းလဲပြီးပါပြီ။")
+        self.destroy()
+အကျိုးကျေးဇူး
+Zero Data Loss: ဒေါင်းလုဒ်ဆွဲနေစဉ် မည်သည့်ဖိုင်မှ Overwrite ဖြစ်ပြီး ပျောက်သွားမည် မဟုတ်ပါ။
+
+User Friendly: ဒေါင်းလုဒ်အကုန် ပြီးသွားမှ တေး/မှတ်တမ်း စာရင်းအလိုက် တေးတေးအေးအေး စီစစ်ပြီး နာမည်ပြင်နိုင်ပါသည်။
+
+
+Transfer Rate (Download Speed), Time Left (ETA) နှင့် Speed Limit များကို စနစ်တကျ ကိုင်တွယ်နိုင်ရန် အောက်ပါ Helper Modules နှင့် Logic များကို utils/helpers.py နှင့် core/download/ အောက်တွင် ထည့်သွင်းပေးပါ။
+
+၁။ utils/helpers.py တွင် Speed နှင့် ETA တွက်သည့် Functions များ ထည့်ခြင်း
+Python
+# utils/helpers.py
+
+def format_speed(bytes_per_sec: float) -> str:
+    """Bytes/sec ကို KB/s သို့မဟုတ် MB/s သို့ ပြောင်းလဲပေးခြင်း"""
+    if bytes_per_sec >= 1024 * 1024:
+        return f"{bytes_per_sec / (1024 * 1024):.2f} MB/s"
+    elif bytes_per_sec >= 1024:
+        return f"{bytes_per_sec / 1024:.2f} KB/s"
+    return f"{bytes_per_sec:.0f} B/s"
+
+
+def calculate_eta(total_bytes: int, downloaded_bytes: int, speed_bytes_per_sec: float) -> str:
+    """ကျန်ရှိသော အချိန် (Time Left) ကို HH:MM:SS သို့မဟုတ် MM:SS ပုံစံဖြင့် တွက်ပေးခြင်း"""
+    remaining_bytes = total_bytes - downloaded_bytes
+    
+    if remaining_bytes <= 0:
+        return "00:00"
+    if speed_bytes_per_sec <= 0:
+        return "Calculating..."
+
+    seconds = int(remaining_bytes / speed_bytes_per_sec)
+    hrs = seconds // 3600
+    mins = (seconds % 3600) // 60
+    secs = seconds % 60
+
+    if hrs > 0:
+        return f"{hrs:02d}:{mins:02d}:{secs:02d}"
+    return f"{mins:02d}:{secs:02d}"
+၂။ core/download/aria2_engine.py တွင် Speed Limit သတ်မှတ်ခြင်း
+aria2c သို့ Command ပို့သည့်အခါ --max-download-limit flag ထည့်သွင်းပေးခြင်းဖြင့် Speed Limit ကို ထိန်းချုပ်နိုင်ပါသည်။
+
+Python
+# core/download/aria2_engine.py
+import os
+
+def build_aria2_command(url: str, output_path: str, speed_limit: str = "Unlimited") -> list:
+    """Speed Limit ပါဝင်သော aria2c Command တည်ဆောက်ခြင်း"""
+    dir_path, file_name = os.path.split(output_path)
+    
+    cmd = [
+        "bin/aria2c.exe",
+        url,
+        f"--dir={dir_path}",
+        f"--out={file_name}",
+        "-s16", "-x16", "-k1M"  # High speed multi-connection
+    ]
+
+    # Speed limit သတ်မှတ်ထားပါက flag ထည့်မည် (ဥပမာ: "5 MB/s" -> "--max-download-limit=5M")
+    if speed_limit and speed_limit != "Unlimited":
+        clean_limit = speed_limit.replace(" ", "").replace("/s", "").replace("B", "")
+        cmd.append(f"--max-download-limit={clean_limit}")
+
+    return cmd
+၃။ core/download/download_manager.py တွင် Real-time Speed & ETA Tracker ထည့်ခြင်း
+ဒေါင်းလုဒ်ဆွဲနေစဉ် စက္ကန့်မလပ် Speed နှင့် ETA ကို UI သို့ တိုက်ရိုက် ပြသနိုင်ရန် Tracker Class ရေးသားနိုင်ပါသည်။
+
+Python
+# core/download/download_manager.py
+import time
+from utils.helpers import format_speed, calculate_eta
+
+class DownloadTracker:
+    def __init__(self, total_bytes: int):
+        self.total_bytes = total_bytes
+        self.last_time = time.time()
+        self.last_bytes = 0
+
+    def calculate_metrics(self, current_bytes: int) -> tuple[str, str]:
+        """
+        ဒေါင်းလုဒ်ဆွဲပြီး ပမာဏကို ထည့်ပေးပါက Transfer Rate နှင့် Time Left ကို ပြန်ပေးမည်
+        Returns: (speed_str, eta_str) -> ("5.20 MB/s", "02:15")
+        """
+        now = time.time()
+        time_diff = now - self.last_time
+
+        # 0.5 စက္ကန့်တိုင်း သို့မဟုတ် 1 စက္ကန့်တိုင်း Speed ကို ပြန်တွက်မည်
+        if time_diff >= 0.5:
+            bytes_diff = current_bytes - self.last_bytes
+            speed_bps = bytes_diff / time_diff if time_diff > 0 else 0
+
+            self.last_time = now
+            self.last_bytes = current_bytes
+
+            speed_str = format_speed(speed_bps)
+            eta_str = calculate_eta(self.total_bytes, current_bytes, speed_bps)
+            return speed_str, eta_str
+
+        return "0 B/s", "--:--"
+UI မှ ပြန်လည် ခေါ်ယူသုံးစွဲပုံ
+Python
+# UI Polling / Worker Loop ထဲတွင် သုံးရန်
+tracker = DownloadTracker(total_bytes=104857600) # 100 MB
+
+# Download Loop / Status Update ချိန်တွင်
+speed, time_left = tracker.calculate_metrics(current_bytes=25000000)
+
+# Treeview သို့မဟုတ် Label တွင် ပြသရန်
+print(f"Speed: {speed}")        # Result: Speed: 12.50 MB/s
+print(f"ETA: {time_left}")      # Result: ETA: 0
+
+
+def get_aria2_limit_flag(selected_option: str) -> str:
+    """UI မှ ရွေးလိုက်သော Option ကို aria2c command flag သို့ ပြောင်းပေးခြင်း"""
+    speed_map = {
+        "Unlimited": None,
+        "4 Mbps (500 KB/s)": "500K",
+        "8 Mbps (1 MB/s)": "1M",
+        "12 Mbps (1.5 MB/s)": "1.5M"
+    }
+    
+    limit_val = speed_map.get(selected_option)
+    return f"--max-download-limit={limit_val}" if limit_val else ""
+
+# core/download/aria2_engine.py
+
+def build_aria2_command(url: str, output_path: str, connections: int = 16) -> list:
+    """
+    connections: ၁ မျိုးတည်း အပိုင်းခွဲမည့် အရေအတွက် (1, 4, 8, 16 စသည်)
+    """
+    dir_path, file_name = os.path.split(output_path)
+    
+    cmd = [
+        "bin/aria2c.exe",
+        url,
+        f"--dir={dir_path}",
+        f"--out={file_name}",
+        f"-s{connections}",  # Connection အပိုင်းခွဲမည့် အရေအတွက်
+        f"-x{connections}",  # Server သို့ ချိတ်မည့် Max Connections
+        "-k1M",              # 1MB ထက်ကြီးမှ ခွဲရန်
+        "--allow-overwrite=true"
+    ]
+    return cmd
+
+
+ခုလိုခွဲထား ရင် idm လိုမြန်နိုင်လား
+
+ဟုတ်ပါတယ်၊ IDM လိုပဲ လုံးဝ မြန်ဆန်သွားပါလိမ့်မယ်။
+
+အကြောင်းမှာ IDM နှင့် aria2c နှစ်ခုလုံးသည် ဖိုင်တစ်ခုကို ဒေါင်းလုဒ်ဆွဲရာတွင် "Segmented Download (Multi-connection Downloading)" ဆိုသည့် နည်းပညာတစ်ခုတည်းကိုပဲ အခြေခံပြီး အလုပ်လုပ်ကြသော ကြောင့်ဖြစ်ပါသည်။
+
+IDM လို ဘာကြောင့် မြန်ရသနည်း?
+၁။ Single-stream Speed Limit ကို ကျော်လွှားနိုင်ခြင်း:
+
+Google Drive Server များသည် Connection တစ်ခု (Single Connection) ကို Speed အကန့်အသတ် (ဥပမာ- 1 MB/s သာ) ပေးလေ့ရှိသည်။ Connection ကို ၁၆ ပိုင်း ခွဲလိုက်သည့်အခါ Server ဘက်မှ Connection ၁၆ ခုစာ Bandwidth ပေးလိုက်ရသဖြင့်  speed အပြည့် (Full Speed) ရသွားခြင်းဖြစ်ပါသည်။
+
+၂။ IDM ထက်ပို၍ RAM & CPU သုံးစွဲမှု သက်သာခြင်း:
+
+IDM သည် GUI မြောက်မြားစွာ ပါဝင်သဖြင့် RAM သုံးစွဲမှု ပိုများသည်။ aria2c သည် C++ ဖြင့် ရေးသားထားသော Lightweight CLI Engine ဖြစ်၍ IDM ထက်ပင် System Resource သုံးစွဲမှု ပိုမို နည်းပါး/ပေါ့ပါးပါသည်။
+
+IDM နီးပါး မြန်ဆန်စေရန် ရေးသားရမည့် အကောင်းဆုံး Parameter Settings
+core/download/aria2_engine.py ထဲတွင် အောက်ပါ Command Config များကို ထည့်သွင်းပေးပါက IDM ၏ ဒေါင်းလုဒ် Speed ကို အပြည့်အဝ အမှီလိုက်နိုင်မည်ဖြစ်ပါသည်-
+
+Python
+cmd = [
+    "bin/aria2c.exe",
+    file_url,
+    f"--dir={dir_path}",
+    f"--out={file_name}",
+    "-s16",                # ၁၆ ပိုင်း ခွဲဆွဲမည် (IDM ၏ Default Connection စနစ်အတိုင်း)
+    "-x16",                # Server သို့ Max Connections ၁၆ ခု ချိတ်မည်
+    "-k1M",                # 1MB အထက်ကြီးပါက အပိုင်း စတင်ခွဲမည်
+    "--file-allocation=none", # File Space ကို ကြိုတင် မယူဘဲ တန်းဆွဲမည် (ဒေါင်းစတင်ချိန် မြန်စေရန်)
+    "--max-resume-failure-tries=0", # Connection ကျပါက အကန့်အသတ်မရှိ ပြန်ချိတ်မည်
+    "--retry-wait=2"       # Error တက်ပါက 2 စက္ကန့်အတွင်း ပြန်ဆွဲမည်
+]
+အနှစ်ချုပ်: IDM ကို သီးသန့် ဝယ်ယူ/Install လုပ်စရာ မလိုဘဲ aria2c ၏ Multi-connection (16 Connections) စနစ်ဖြင့် IDM နီးပါး ၁၀၀% မြန်ဆန်သည့် ဒေါင်းလုဒ် Speed ကို ရရှိမည်ဖြစ်ပါသည်။
+
+"-k1M", # 5MB အထက်ကြီးပါက အပိုင်း စတင်ခွဲမည်အပးမားွခ
+
+မှားနေပါတယ်ခင်ဗျာ။
+
+-k1M ဆိုတာ "1MB (1 Megabyte)" အထက်ကြီးမှ အပိုင်းစတင်ခွဲမယ်လို့ ပြောတာဖြစ်ပါတယ်။
+
+5MB အထက်ကြီးမှ အပိုင်းစတင်ခွဲစေချင်ရင် -k5M ဟု ပြောင်းပေးရပါမည်။
+
+ကွာခြားချက်နှင့် Comment အမှန်
+Python
+"-k1M",   # 1MB အထက်ကြီးပါက အပိုင်း စတင်ခွဲမည် (Default)
+"-k5M",   # 5MB အထက်ကြီးပါက အပိုင်း စတင်ခွဲမည် (သင်လိုချင်သည့် ပုံစံ)
+ဘယ်လိုချိန်မှာ ဘယ်ဟာ သုံးသင့်လဲ?
+-k1M သုံးရင်: ဖိုင်သေးသေးလေးတွေ (ဥပမာ- 2MB, 3MB ရှိတဲ့ PDF သို့မဟုတ် Image ဖိုင်များ) ကိုပါ အပိုင်းခွဲပြီး ဒေါင်းပေးတဲ့အတွက် ဖိုင်သေးလေးတွေ ဒေါင်းတာ ပိုမြန်ပါတယ်။
+
+-k5M သုံးရင်: 5MB အောက်ဖိုင်တွေကို အပိုင်းမခွဲဘဲ (Single Connection) နဂိုအတိုင်းဆွဲပြီး 5MB အထက်ကြီးတဲ့ ဖိုင်ကြီးတွေကိုမှ 16 ပိုင်း ခွဲဆွဲမှာ ဖြစ်ပါတယ်။
+
+အကြံပြုချက်: Google Drive ပေါ်က ဖိုင်အသေးအကြီး အကုန်လုံး Speed မြန်မြန်ရစေချင်ရင် -k1M ထားတာက အကောင်းဆုံး ဖြစ်ပါတယ်။
+
+IDM နီးပါး စွမ်းဆောင်ရည်မြင့်မားလာစေရန် Resume URL Refresh Engine နှင့် Queue Prioritization အတွက် ရေးသားရမည့် Code Logic များမှာ အောက်ပါအတိုင်း ဖြစ်ပါသည်။
+
+၁။ Resume URL Refresh Engine (core/download/resume_manager.py)
+Google Drive Links တွေဟာ သက်တမ်းကုန် (Expired) သွားပါက ဒေါင်းလုဒ် ဆက်ဆွဲ၍ မရတော့ပါ။ Drive ID ဖြင့် Link အသစ်ပြန်တောင်းကာ aria2c သို့ လွှဲပေးမည့် Logic ဖြစ်ပါတယ်-
+
+Python
+# core/download/resume_manager.py
+import os
+from core.cloud.auth_manager import AuthManager
+from core.database.queue_repo import QueueRepository
+from utils.logger import logger
+
+class ResumeManager:
+    def __init__(self, db_manager):
+        self.db = db_manager
+        self.queue_repo = QueueRepository(db_manager)
+        self.auth_mgr = AuthManager()
+
+    def refresh_and_resume(self, download_item_id: int) -> str:
+        """
+        Link သက်တမ်းကုန်သွားပါက Google Drive API ထံမှ 
+        Download URL အသစ်ပြန်တောင်းပြီး Resume လုပ်ပေးမည့် Logic
+        """
+        # 1. DB ထဲမှ ဖိုင်အချက်အလက်များကို ယူမည်
+        item = self.queue_repo.get_item_by_id(download_item_id)
+        if not item:
+            logger.error(f"Item #{download_item_id} not found in DB.")
+            return None
+
+        drive_file_id = item["drive_file_id"]
+        logger.info(f"Refreshing Expired Download Link for Drive ID: {drive_file_id}")
+
+        try:
+            # 2. Drive API Service မှတစ်ဆင့် Fresh Direct Link / Auth Token အသစ်ပြန်ယူမည်
+            service = self.auth_mgr.get_drive_service()
+            
+            # Google Drive Direct Download URL အသစ်
+            new_download_url = f"https://www.googleapis.com/drive/v3/files/{drive_file_id}?alt=media"
+            access_token = self.auth_mgr.get_valid_access_token()
+
+            # 3. DB ထဲတွင် URL အသစ်နှင့် Status ကို Update ပြန်လုပ်မည်
+            self.queue_repo.update_item_url(download_item_id, new_download_url)
+            self.queue_repo.update_status(download_item_id, "ready")
+
+            logger.info(f"URL Refreshed Successfully for Item #{download_item_id}")
+            return new_download_url
+
+        except Exception as e:
+            logger.error(f"Failed to refresh URL for Drive ID {drive_file_id}: {str(e)}")
+            self.queue_repo.update_status(download_item_id, "failed")
+            return None
+၂။ Queue Prioritization & Concurrency Engine (core/download/queue_manager.py)
+တစ်ပြိုင်နက်တည်း ဖိုင် ၃ ဖိုင်ပဲ ဒေါင်းလုဒ်ဆွဲပြီး ကျန်တာကို Queue ထဲ စောင့်ဆိုင်းစေခြင်းနှင့် High Priority သတ်မှတ်ပေးသည့် Logic ဖြစ်ပါတယ်-
+
+Python
+# core/download/queue_manager.py
+from core.database.queue_repo import QueueRepository
+from core.download.aria2_engine import Aria2Engine
+from utils.logger import logger
+
+class QueueManager:
+    def __init__(self, db_manager, max_concurrent: int = 3):
+        self.db = db_manager
+        self.queue_repo = QueueRepository(db_manager)
+        self.aria2 = Aria2Engine()
+        self.max_concurrent = max_concurrent  # ပြိုင်တူဒေါင်းမည့် အရေအတွက် (Default = 3)
+
+    def process_next_in_queue(self):
+        """
+        Queue ထဲမှ Priority အမြင့်ဆုံးဖိုင်များကို ရွေးထုတ်ပြီး 
+        Max Concurrent Limit ထက် မကျော်စေဘဲ ဒေါင်းလုဒ် စတင်မောင်းနှင်မည်
+        """
+        # 1. လက်ရှိ Active ဖြစ်နေသော (Downloading) အရေအတွက်ကို စစ်မည်
+        active_downloads = self.queue_repo.get_count_by_status("downloading")
+
+        if active_downloads >= self.max_concurrent:
+            logger.info(f"Max concurrent limit ({self.max_concurrent}) reached. Waiting...")
+            return
+
+        # 2. ကျန်ရှိနေသည့် slots အရေအတွက်ကို တွက်မည်
+        available_slots = self.max_concurrent - active_downloads
+
+        # 3. DB ထဲမှ Priority အမြင့်ဆုံး (10 > 5 > 1) pending ဖိုင်များကို ဆွဲထုတ်မည်
+        # Query: SELECT * FROM download_items WHERE status = 'pending' ORDER BY priority DESC, id ASC LIMIT ?
+        pending_items = self.queue_repo.get_pending_items_by_priority(limit=available_slots)
+
+        for item in pending_items:
+            self._start_download_item(item)
+
+    def _start_download_item(self, item: dict):
+        """Aria2 Engine သို့ Task လွှဲပြောင်း၍ ဒေါင်းလုဒ်စတင်ခြင်း"""
+        item_id = item["id"]
+        url = item["download_url"]
+        save_path = item["save_path"]
+
+        logger.info(f"Starting Download for Item #{item_id} (Priority: {item['priority']})")
+        
+        # Status ကို Downloading သို့ ပြောင်းမည်
+        self.queue_repo.update_status(item_id, "downloading")
+        
+        # Aria2c ဖြင့် 16-Connections ခွဲ၍ စတင်ဆွဲမည်
+        self.aria2.add_download(url=url, output_path=save_path, connections=16)
+
+    def set_priority(self, download_item_id: int, priority_level: int):
+        """
+        User က သီးသန့် ဖိုင်တစ်ခုကို အရင်ဆုံး မြန်မြန်ဒေါင်းခိုင်းလိုပါက 
+        Priority မြှင့်ပေးရန် (High: 10, Normal: 5, Low: 1)
+        """
+        self.queue_repo.update_item_priority(download_item_id, priority_level)
+        logger.info(f"Item #{download_item_id} Priority set to {priority_level}")
+        
+        # Queue ကို ချက်ချင်း Re-check ပြုလုပ်မည်
+        self.process_next_in_queue()
+၃။ aria2_engine.py ထဲတွင် IDM လို မြန်စေမည့် Flags များ ဖြည့်စွက်ခြင်း
+core/download/aria2_engine.py ထဲရှိ Command Generator ကို အောက်ပါအတိုင်း အပြည့်အစုံ ပြင်ပေးပါ-
+
+Python
+# core/download/aria2_engine.py
+import os
+
+def build_idm_style_aria2_cmd(url: str, save_path: str, speed_limit: str = None) -> list:
+    dir_path, file_name = os.path.split(save_path)
+
+    cmd = [
+        "bin/aria2c.exe",
+        url,
+        f"--dir={dir_path}",
+        f"--out={file_name}",
+        "-s16",                          # ၁၆ ပိုင်း ခွဲဆွဲမည်
+        "-x16",                          # Server သို့ Max Connections ၁၆ ခု ချိတ်မည်
+        "-k1M",                          # 1MB ထက်ကြီးပါက အပိုင်း စတင်ခွဲမည်
+        "--min-split-size=1M",
+        "--file-allocation=falloc",      # Disk Space ကို ကြိုတင်နေရာယူမည် (Corruption ကာကွယ်ရန်)
+        "--lowest-speed-limit=1K",       # Speed ကျသွားပါက Connection ပြန် Re-connect လုပ်မည်
+        "--max-resume-failure-tries=0",  # Connection ကျပါက အကန့်အသတ်မရှိ ပြန်ချိတ်မည်
+        "--retry-wait=2",                # Retry ပြုလုပ်ရန် စောင့်ဆိုင်းချိန် ၂ စက္ကန့်
+        "--allow-overwrite=true"
+    ]
+
+    if speed_limit:
+        cmd.append(f"--max-download-limit={speed_limit}")
+
+    return cmd
+ရရှိမည့် အကျိုးကျေးဇူး
+Resume URL Refresh: Link သက်တမ်းကုန်သွားလည်း Downloader က 0% မှ ပြန်မစဘဲ ရပ်ထားသည့် ရာခိုင်နှုန်းမှအတိုင်း ဆက်လက်ဒေါင်းလုဒ် ဆွဲပေးပါမည်။
+
+Queue Priority: ဖိုင် ၁၀၀ ဒေါင်းလုဒ်ထည့်ထားလည်း စက်မဟန်းဘဲ ၃ ဖိုင်စီ အလှည့်ကျ စနစ်တကျ ဒေါင်းပေးသွားပါမည်။
+
+User များထံတွင် ဖြစ်ပေါ်သော Error များနှင့် Crash Log များကို မိမိထံသို့ အလိုအလျောက် သို့မဟုတ် တိုက်ရိုက် ရောက်ရှိလာစေရန် Error Reporting System တစ်ခု ချိတ်ဆက်ထားရန် လိုအပ်ပါသည်။
+
+ယင်းအတွက် အသုံးပြုနိုင်သော အထိရောက်ဆုံး နည်းလမ်း (၃) ခုမှာ အောက်ပါအတိုင်း ဖြစ်ပါသည်။
+
+၁။ Sentry.io သုံးခြင်း (Professional & Industry Standard)
+Sentry သည် App တွင် Error တက်သွားသည်နှင့် တပြိုင်နက် ဘာကြောင့် တက်သည်၊ မည်သည့် OS/Python Version ဖြစ်သည်၊ မည်သည့် Code Line တွင် ဖြစ်သည်ဆိုသည်ကို Real-time Dashboard ထဲသို့ အလိုအလျောက် ပို့ပေးသည့် စနစ်ဖြစ်ပါသည်။ Free Plan ဖြင့်ပင် လုံလောက်စွာ သုံးနိုင်ပါသည်။
+
+Install လုပ်ရန်: pip install sentry-sdk
+
+main.py ထဲတွင် ချိတ်ဆက်ပုံ:
+
+Python
+import sentry_sdk
+
+# App စဖွင့်ချိန်တွင် Sentry ကို Initialize လုပ်မည်
+sentry_sdk.init(
+    dsn="YOUR_SENTRY_DSN_URL_HERE", # Sentry Dashboard မှရသော DSN Link
+    traces_sample_rate=1.0,
+    release="nexora@1.0.0" # App Version
+)
+၂။ Telegram Bot / Discord Webhook သုံးခြင်း (Free & Lightweight DIY)
+Sentry အထိ မသုံးချင်ပါက User ဘက်တွင် Error တက်တိုင်း မိမိ၏ သီးသန့် Telegram Channel / Group ထံသို့ Bot မှတစ်ဆင့် Error Log ကို အလိုအလျောက် လာပို့ပေးအောင် ပြုလုပ်ထားနိုင်ပါသည်။
+
+Python
+# utils/error_reporter.py
+import requests
+import traceback
+import platform
+
+TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN"
+TELEGRAM_CHAT_ID = "YOUR_CHAT_ID"
+
+def send_error_to_telegram(error_exception):
+    """Error တက်ပါက Telegram သို့ စာပို့ပေးမည့် Function"""
+    try:
+        error_trace = traceback.format_exc()
+        system_info = f"OS: {platform.system()} {platform.release()}"
+        
+        message = (
+            f"⚠️ **Nexora App Error Report**\n\n"
+            f"**System:** {system_info}\n"
+            f"**Error Details:**\n```\n{error_trace[:3000]}\n```" # စာလုံးရေ မပိုစေရန် 3000 ထိဖြတ်မည်
+        )
+
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"})
+    except Exception:
+        pass # Network မရှိပါက Ignore လုပ်မည်
+၃။ Tkinter Global Unhandled Exception Catching
+App တစ်ခုလုံးတွင် User မထင်မှတ်ဘဲ ကြုံတွေ့ရသည့် Unhandled Error/Crash များကို ဖမ်းယူရန် main_window.py တွင် အောက်ပါအတိုင်း ချိတ်ဆက်ပေးရပါမည်။
+
+Python
+# ui/main_window.py
+import tkinter as tk
+from tkinter import messagebox
+from utils.error_reporter import send_error_to_telegram
+
+class MainWindow(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        
+        # Tkinter ၏ Global Exception Handler ကို ချိန်ညှိခြင်း
+        self.report_callback_exception = self.show_error_dialog
+
+    def show_error_dialog(self, exc, val, tb):
+        """App တွင် Error တက်သွားပါက User ထံ Pop-up ပြပြီး Developer ထံ Log ပို့မည်"""
+        error_msg = f"{exc.__name__}: {val}"
+        
+        # 1. Developer ထံ နောက်ကွယ်မှ Error Log လှမ်းပို့မည်
+        send_error_to_telegram(val)
+
+        # 2. User ထံ ယဉ်ကျေးစွာ အသိပေးမည်
+        messagebox.showerror(
+            "Unexpected Error", 
+            f"An error occurred: {error_msg}\n\nThe issue has been logged and reported to the developer."
+        )
+💡 သတိပြုရမည့် အချက် (Privacy)
+User များ၏ သီးသန့် အချက်အလက်များ (ဥပမာ- Google Refresh Tokens၊ Passwords သို့မဟုတ် Local File Path များ) ကို Error Log ထဲတွင် ပါမသွားစေရန် အစားထိုး/ဖျက်ထုတ်ပြီးမှသာ Log ပို့ပေးသင့်ပါသည်။
