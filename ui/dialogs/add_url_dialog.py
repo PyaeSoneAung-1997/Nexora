@@ -2,15 +2,22 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
+from utils.helpers import center_relative_to_parent
 
 # utils & url_detector ထဲမှ Helper ခေါ်ယူရန်
-from core.url.url_detector import parse_drive_url 
+from core.url.url_detector import detect_url_type 
 
 class AddUrlDialog(tk.Toplevel):
     def __init__(self, parent, sync_manager=None):
         super().__init__(parent)
+        self.parent = parent
         self.title("➕ Add Google Drive URL")
+       
+        
+        self.withdraw()
         self.geometry("500x280")
+        center_relative_to_parent(self,width=500, height=280)
+        self.deiconify()
         self.resizable(False, False)
 
         self.transient(parent)
@@ -25,14 +32,15 @@ class AddUrlDialog(tk.Toplevel):
 
         # 1. URL / ID Input
         ttk.Label(frame, text="Google Drive Folder / File URL:").pack(anchor="w", padx=10, pady=(10, 2))
-        self.ent_url = ttk.Entry(frame, width=60)
+        self.ent_url = ttk.Entry(frame, width=10)
         self.ent_url.pack(fill="x", padx=10, pady=5)
-
+        
+        # ttk.Button(path_frame,text="Start").pack(side="right")
         # 2. Custom Download Save Path
         ttk.Label(frame, text="Download Destination Path:").pack(anchor="w", padx=10, pady=(10, 2))
         path_frame = ttk.Frame(frame)
         path_frame.pack(fill="x", padx=10, pady=5)
-
+        
         self.ent_save_path = ttk.Entry(path_frame)
         self.ent_save_path.insert(0, "D:/nex") # Default path
         self.ent_save_path.pack(side="left", fill="x", expand=True, padx=(0, 5))
@@ -61,7 +69,7 @@ class AddUrlDialog(tk.Toplevel):
             return
 
         # URL Detector ဖြင့် Folder ID သို့မဟုတ် File ID ခွဲထုတ်ခြင်း
-        extracted_id, target_type = parse_drive_url(raw_url) # 'folder' or 'file'
+        extracted_id, target_type = detect_url_type(raw_url) # 'folder' or 'file'
 
         if not extracted_id:
             messagebox.showerror("Invalid URL", "Google Drive URL မမှန်ကန်ပါ။ ကျေးဇူးပြု၍ ပြန်စစ်ပါ။", parent=self)
@@ -72,3 +80,5 @@ class AddUrlDialog(tk.Toplevel):
         
         messagebox.showinfo("Success", f"{target_type.capitalize()} ID #{extracted_id} ကို Sync Queue ထဲသို့ ထည့်သွင်းပြီးပါပြီ။", parent=self)
         self.destroy()
+
+    

@@ -44,8 +44,9 @@ def main():
     result = manager.analyze(entry_url_var.get())
     if result["type"] == "None":
         log(f"⚠️ URL Analysis Result: {result['error']}")
-    else:
-    # 3. Auth Manager & Credentials Test
+    elif result['type'] != "google_dire":
+        log(f"This is Other Link, This operation is no complete.Sorry")
+    
         auth_mgr = GoogleAuthManager(db_manager=db)
         active_accounts = auth_mgr.get_active_accounts()
         active_acc_id = None

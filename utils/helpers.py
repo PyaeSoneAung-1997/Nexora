@@ -53,3 +53,20 @@ def calculate_file_hash(filepath: str, algo="md5") -> str:
             hash_obj.update(chunk)
             
     return hash_obj.hexdigest()
+
+def center_relative_to_parent(self, width, height):
+        # Window ၏ Geometry အမှန် ရရှိရန် update_idletasks ကို ခေါ်ပေးရမည်
+        self.parent.update_idletasks()
+        
+        # Main Window ၏ တည်နေရာ နှင့် အရွယ်အစားကို ယူမည်
+        parent_x = self.parent.winfo_x()
+        parent_y = self.parent.winfo_y()
+        parent_w = self.parent.winfo_width()
+        parent_h = self.parent.winfo_height()
+
+        # Dialog ၏ Center X နှင့် Y တည်နေရာကို တွက်ထုတ်ခြင်း
+        x = parent_x + (parent_w // 2) - (width // 2)
+        y = parent_y + (parent_h // 2) - (height // 2)
+
+        # Center တည်နေရာဖြင့် Geometry သတ်မှတ်ခြင်း
+        self.geometry(f"{width}x{height}+{x}+{y}")
