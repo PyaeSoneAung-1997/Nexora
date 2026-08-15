@@ -10,11 +10,13 @@ from ui.dialogs.add_url_dialog import AddUrlDialog
 
 
 def main():
-    # root = tk.Tk()
+    root = tk.Tk()
 
-    # root.title("Test")
-    # main_window = AddUrlDialog(root)
-    main_window = MainWindow()
+    root.title("Test")
+    main_window = LoginDialog(root)
+    print(main_window)
+    main_window = AddUrlDialog(root)
+    # main_window = MainWindow()
     return main_window
 
 

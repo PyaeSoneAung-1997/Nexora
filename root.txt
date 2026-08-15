@@ -1097,3 +1097,260 @@ class MainWindow(tk.Tk):
         )
 💡 သတိပြုရမည့် အချက် (Privacy)
 User များ၏ သီးသန့် အချက်အလက်များ (ဥပမာ- Google Refresh Tokens၊ Passwords သို့မဟုတ် Local File Path များ) ကို Error Log ထဲတွင် ပါမသွားစေရန် အစားထိုး/ဖျက်ထုတ်ပြီးမှသာ Log ပို့ပေးသင့်ပါသည်။
+
+
+from googleapiclient.discovery import build
+
+# service = build('drive', 'v3', credentials=creds)
+
+
+def get_drive_changes(service, saved_page_token=None):
+    # 1. Page Token မရှိသေးရင် စတင်မည့် Token ကို Google ထံမှ တောင်းယူခြင်း
+    if not saved_page_token:
+        response = service.changes().getStartPageToken().execute()
+        saved_page_token = response.get("startPageToken")
+        print(f"Initial Page Token: {saved_page_token}")
+        return saved_page_token
+
+    # 2. ပြောင်းလဲမှု (Changes) များကို လှမ်းတောင်းခြင်း
+    page_token = saved_page_token
+    while page_token is not None:
+        response = (
+            service.changes()
+            .list(
+                pageToken=page_token,
+                fields="nextPageToken, newStartPageToken, changes(fileId, time, removed, file(name, trashed, mimeType))",
+                supportsAllDrives=True,
+                includeItemsFromAllDrives=True,
+            )
+            .execute()
+        )
+
+        for change in response.get("changes", []):
+            file_id = change.get("fileId")
+            is_removed = change.get("removed")  # လုံးဝ ဖျက်လိုက်ရင် True
+            file_info = change.get("file", {})
+
+            # ဖိုင် အခြေအနေ စစ်ဆေးခြင်း
+            if is_removed or file_info.get("trashed"):
+                print(
+                    f"[DELETED] File ID: {file_id} ကို ဖျက်လိုက်ပါပြီ။"
+                )
+
+            elif file_info:
+                file_name = file_info.get("name")
+                print(
+                    f"[UPDATED/CREATED] File: '{file_name}' (ID: {file_id}) ပြင်ဆင်/အသစ်ရောက်လာပါသည်။"
+                )
+
+        if "nextPageToken" in response:
+            page_token = response.get("nextPageToken")
+        else:
+            # နောက်တစ်ကြိမ် ခေါ်ယူစစ်ဆေးနိုင်ရန် New Token ကို သိမ်းဆည်းပါ
+            new_page_token = response.get("newStartPageToken")
+            return new_page_token
+
+
+    Tkinter မှာ Setting Button ကို နှိပ်လိုက်ရင် Setting Page ပေါ်လာအောင် လုပ်နိုင်တဲ့ နည်းလမ်း ၂ မျိုး ရှိပါတယ် ရဲဘော်။အသုံးအများဆုံးနဲ့ အလွယ်ကူဆုံး နည်းလမ်းကတော့ Pop-up Window (tk.Toplevel) အဖြစ် သီးသန့် Window အသစ်တစ်ခု ဖွင့်ပေးတာ ဖြစ်ပါတယ်။နည်းလမ်း (၁) - Pop-up Window အဖြစ် ပွင့်စေနည်း (Toplevel သုံးနည်း)Setting ခလုတ်ကို နှိပ်လိုက်တာနဲ့ မိန်း Window ရဲ့ အပေါ်မှာ Window အသစ်တစ်ခု ဘက်မောက် ပေါ်လာမည့် နည်းလမ်း ဖြစ်ပါတယ် -Pythonimport tkinter as tk
+from tkinter import ttk
+
+
+class MainApp(tk.Tk):
+
+    def __init__(self):
+        super().__init__()
+        self.title("Main Application")
+        self.geometry("400x300")
+
+        # 1. Main Window ထဲမှာ Setting Button ထည့်ခြင်း
+        self.btn_setting = ttk.Button(
+            self, text="⚙️ Settings", command=self.open_settings
+        )
+        self.btn_setting.pack(padx=20, pady=20)
+
+    # 2. Setting Button နှိပ်ရင် အလုပ်လုပ်မည့် Function
+    def open_settings(self):
+        # Window အသစ် (Pop-up) ဆောက်ခြင်း
+        settings_win = tk.Toplevel(self)
+        settings_win.title("Settings Page")
+        settings_win.geometry("300x250")
+
+        # Main Window ကို ခဏ နှိပ်လို့မရအောင် သော့ခတ်ထားခြင်း (Modal Window)
+        settings_win.grab_set()
+
+        # --- Setting Page ထဲက Component များကို ဒီမှာ ရေးပါ ---
+        ttk.Label(
+            settings_win, text="Setting Options", font=("Helvetica", 12, "bold")
+        ).pack(pady=10)
+
+        # ဥပမာ - API Key Input Field
+        ttk.Label(settings_win, text="API Key:").pack(anchor="w", padx=15)
+        ent_api = ttk.Entry(settings_win, width=30)
+        ent_api.pack(padx=15, pady=5)
+
+        # ဥပမာ - Checkbox
+        chk_val = tk.BooleanVar()
+        ttk.Checkbutton(
+            settings_win, text="Auto Sync Enable", variable=chk_val
+        ).pack(anchor="w", padx=15, pady=5)
+
+        # Save Button (နှိပ်ရင် Window ပြန်ပိတ်မည်)
+        btn_save = ttk.Button(
+            settings_win, text="Save & Close", command=settings_win.destroy
+        )
+        btn_save.pack(pady=20)
+
+
+if __name__ == "__main__":
+    app = MainApp()
+    app.mainloop()
+နည်းလမ်း (၂) - Main Window ထဲမှာပဲ Page လဲသွားစေနည်း (Frame လဲနည်း)Pop-up မထွက်ဘဲ Main Window မျက်နှာပြင်တစ်ခုလုံးကို Setting Page အဖြစ် ပြောင်းလဲချင်ရင်တော့ Main Frame ကို pack_forget() နဲ့ ခဏဖျောက်ပြီး Setting Frame ကို အစားထိုးပြရတာဖြစ်ပါတယ်။Python    def show_settings_frame(self):
+        # Main Frame ကို ခဏ ဖျောက်မည်
+        self.main_frame.pack_forget()
+
+        # Setting Frame ကို ဖော်မည်
+        self.setting_frame.pack(fill="both", expand=True)
+
+    def show_main_frame(self):
+        # Setting Frame ကို ခဏ ဖျောက်မည်
+        self.setting_frame.pack_forget()
+
+        # Main Frame ကို ပြန်ဖော်မည်
+        self.main_frame.pack(fill="both", expand=True)
+💡 အဓိက သတိပြုရန် ချက်များ:tk.Toplevel(self): Main Window (tk.Tk) မဟုတ်ဘဲ Child Window အဖြစ် ဖွင့်ပေးတာပါ။settings_win.grab_set(): Setting Page ပွင့်နေစဉ်မှာ Main Window ဘက်ကို မှားပြီး နှိပ်မိတာမျိုး မဖြစ်အောင် Focus ယူပေးထားတာဖြစ်ပါတယ်။settings_win.destroy(): Setting Window ကို ပိတ်ပစ်ချင်တဲ့အခါ သုံးပါတယ်။
+
+
+Setting Page ကနေ ရိုက်ထည့်လိုက်တဲ့ API Key သို့မဟုတ် Configurations တွေကို JSON file အဖြစ် သိမ်းဆည်းရန်နဲ့ App ပြန်ဖွင့်တဲ့အခါ ထို JSON file ထဲက data တွေကို ပြန်ဖတ်ရန် အဆင့်ဆင့် ရေးသားပုံ လမ်းညွှန်ဖြစ်ပါတယ်။
+
+လုပ်ဆောင်ပုံ အဆင့်ဆင့်
+save_settings(): Setting Page မှ Data များကို ယူပြီး json.dump() ဖြင့် settings.json ဖိုင်ထဲသို့ သိမ်းမည်။
+
+load_settings(): App စတင်ချိန် သို့မဟုတ် Setting Page ဖွင့်ချိန်တွင် settings.json ဖိုင်ရှိပါက json.load() ဖြင့် Data ပြန်ဖတ်မည်။
+
+Python Tkinter + JSON သိမ်းဆည်းသည့် Code နမူနာ
+Python
+import json
+import os
+import tkinter as tk
+from tkinter import messagebox, ttk
+
+# Setting များကို သိမ်းဆည်းမည့် JSON ဖိုင်အမည်
+SETTINGS_FILE = "settings.json"
+
+
+class MainApp(tk.Tk):
+
+    def __init__(self):
+        super().__init__()
+        self.title("Google Drive Tool")
+        self.geometry("400x300")
+
+        # 1. Main Window တွင် Setting Button ထည့်ခြင်း
+        self.btn_setting = ttk.Button(
+            self, text="⚙️ Settings", command=self.open_settings
+        )
+        self.btn_setting.pack(padx=20, pady=20)
+
+    def load_settings(self):
+        """JSON ဖိုင်ထဲမှ သိမ်းဆည်းထားသော Data များကို ပြန်ဖတ်သည့် Function"""
+        if os.path.exists(SETTINGS_FILE):
+            try:
+                with open(SETTINGS_FILE, "r") as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"Error loading settings: {e}")
+        # ဖိုင်မရှိသေးပါက Default တန်ဖိုးများ ပြန်ပေးမည်
+        return {"api_key": "", "drive_id": "", "auto_sync": False}
+
+    def save_settings(self, api_key, drive_id, auto_sync, window):
+        """Data များကို JSON ဖိုင်ထဲသို့ သိမ်းဆည်းသည့် Function"""
+        data = {
+            "api_key": api_key,
+            "drive_id": drive_id,
+            "auto_sync": auto_sync,
+        }
+
+        try:
+            with open(SETTINGS_FILE, "w") as f:
+                json.dump(data, f, indent=4)  # indent=4 ဖြင့် ဖတ်ရလွယ်အောင် သိမ်းမည်
+
+            messagebox.showinfo(
+                "Success", "Settings များကို အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။"
+            )
+            window.destroy()  # Setting Window ကို ပိတ်မည်
+        except Exception as e:
+            messagebox.showerror(
+                "Error", f"Setting သိမ်းဆည်းရာတွင် အမှားအယွင်းရှိပါသည်: {e}"
+            )
+
+    def open_settings(self):
+        """Setting Window (Pop-up) ကို ဖွင့်ပေးမည့် Function"""
+        settings_win = tk.Toplevel(self)
+        settings_win.title("Settings")
+        settings_win.geometry("350x300")
+        settings_win.grab_set()  # Main Window ကို ခဏ သော့ခတ်ထားမည်
+
+        # ယခင်သိမ်းထားသော Setting Data များကို ပြန်ယူမည်
+        current_settings = self.load_settings()
+
+        # --- UI Components ---
+        ttk.Label(
+            settings_win, text="App Settings", font=("Helvetica", 12, "bold")
+        ).pack(pady=10)
+
+        # 1. API Key Entry Field
+        ttk.Label(settings_win, text="API Key:").pack(anchor="w", padx=20)
+        ent_api_key = ttk.Entry(settings_win, width=35)
+        ent_api_key.pack(padx=20, pady=(2, 10))
+        # ယခင်သိမ်းထားသော API Key တန်ဖိုးရှိပါက ဖြည့်ပေးထားမည်
+        ent_api_key.insert(0, current_settings.get("api_key", ""))
+
+        # 2. Drive ID Entry Field
+        ttk.Label(settings_win, text="Target Drive ID:").pack(
+            anchor="w", padx=20
+        )
+        ent_drive_id = ttk.Entry(settings_win, width=35)
+        ent_drive_id.pack(padx=20, pady=(2, 10))
+        ent_drive_id.insert(0, current_settings.get("drive_id", ""))
+
+        # 3. Auto Sync Checkbox
+        chk_auto_sync_var = tk.BooleanVar(
+            value=current_settings.get("auto_sync", False)
+        )
+        chk_auto_sync = ttk.Checkbutton(
+            settings_win,
+            text="Auto Sync Enable",
+            variable=chk_auto_sync_var,
+        )
+        chk_auto_sync.pack(anchor="w", padx=20, pady=5)
+
+        # 4. Save Button
+        btn_save = ttk.Button(
+            settings_win,
+            text="Save Settings",
+            command=lambda: self.save_settings(
+                ent_api_key.get(),
+                ent_drive_id.get(),
+                chk_auto_sync_var.get(),
+                settings_win,
+            ),
+        )
+        btn_save.pack(pady=20)
+
+
+if __name__ == "__main__":
+    app = MainApp()
+    app.mainloop()
+ဖြစ်ပေါ်လာမည့် settings.json ဖိုင်ပုံစံ
+"Save Settings" ခလုတ်ကို နှိပ်လိုက်ပါက App တည်ရှိရာ Folder ထဲတွင် settings.json ဆိုသည့် ဖိုင်အသစ် ထွက်လာပြီး အောက်ပါအတိုင်း သိမ်းဆည်းသွားမည် ဖြစ်ပါသည် -
+
+JSON
+{
+    "api_key": "AIzaSyD-Your-Actual-API-Key",
+    "drive_id": "0ABC123456789_DriveID",
+    "auto_sync": true
+}
+💡 အရေးကြီးသော အချက်များ
+json.dump(..., indent=4): JSON ဖိုင်ထဲတွင် စာကြောင်းများ ပရုပ်ပရုတ်မဖြစ်ဘဲ စနစ်တကျ Alignment လှပစွာ သိမ်းဆည်းပေးပါသည်။
+
+os.path.exists(): ဖိုင်မရှိသေးသည့် အချိန် (App ကို ပထမဆုံးအကြိမ် ဖွင့်ချိန်) တွင် Error မတက်ဘဲ Default Value များဖြင့် အဆင်ပြေပြေ အလုပ်လုပ်စေပါသည်။

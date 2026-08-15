@@ -52,7 +52,6 @@ class CustomToolbar(tk.Frame):
     # --- Button Action Event Handlers ---
     def _on_add_url(self):
         #   """Login Pop-up ခေါ်ယူခြင်း"""
-        # main_window = self.winfo_toplevel()
         dialog = AddUrlDialog(self.parent)
         return dialog
         # မကြာမီ URL Input Dialog ခေါ်ယူသည့် Logic ထည့်ရန်

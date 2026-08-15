@@ -3,10 +3,12 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
 
+
+
 class LoginDialog(tk.Toplevel):
     def __init__(self, parent, db_manager=None, auth_manager=None):
         super().__init__(parent)
-        self.title("🔑 Google Account Login")
+        self.title("🔑 Google Account Status")
         self.geometry("450x260")
         self.resizable(False, False)
         
@@ -18,7 +20,7 @@ class LoginDialog(tk.Toplevel):
         self._init_ui()
 
     def _init_ui(self):
-        frame = ttk.LabelFrame(self, text=" OAuth 2.0 Credentials ")
+        frame = ttk.LabelFrame(self, text=" Google Account Status ")
         frame.pack(fill="both", expand=True, padx=15, pady=15)
 
         # 1. Credentials JSON File Picker
