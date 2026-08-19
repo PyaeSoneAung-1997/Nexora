@@ -1,9 +1,9 @@
 # ui/main_window.py
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 
-from ui.components.menubar import CustomMenubar
-from ui.components.toolbar import CustomToolbar
+# from ui.components.menubar import CustomMenubar
+# from ui.components.toolbar import CustomToolbar
 # Core Layer Imports
 # from core.database.db_manager import DatabaseManager
 # from core.sync.sync_manager import SyncManager
@@ -18,15 +18,18 @@ from ui.components.toolbar import CustomToolbar
 
 class MainWindow(tk.Tk):
     """App တစ်ခုလုံး၏ Main Shell & Controller Class"""
-    def __init__(self):
+    def __init__(self, menubar_cls=None, toolbar_cls=None):
         super().__init__()
         self.title("Nexora - Google Drive Sync & Downloader")
         self.geometry("900x600")
     
         self.minsize(800, 500)
 
-        self.menubar = CustomMenubar(self)
-        self.toolbar = CustomToolbar(self)
+        if menubar_cls:
+            self.menubar = menubar_cls(self)
+        
+        if toolbar_cls:
+            self.toolbar = toolbar_cls(self, on_add_url_callback=self.handle_add_url_result)
 
         # 1. Core Services ကို Initialize လုပ်မည်
         # self.db = DatabaseManager()
@@ -49,6 +52,9 @@ class MainWindow(tk.Tk):
         self.status_bar = ttk.Label(self, text="Ready", relief="sunken", anchor="w")
         self.status_bar.pack(side="bottom", fill="x", padx=2, pady=2)
 
+    def handle_add_url_result(self,result):
+        print("MainWindow received URL result:",result)
+        self.status_bar.config(text=f"Added:{result}")
     
     
     def _start_global_polling(self):

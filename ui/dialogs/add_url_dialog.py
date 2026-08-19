@@ -10,9 +10,10 @@ from utils.helpers import center_relative_to_parent
 from core.url.url_manager import URLManager 
 
 class AddUrlDialog(tk.Toplevel):
-    def __init__(self, parent, sync_manager=None):
+    def __init__(self, parent, sync_manager=None, callback=None):
         super().__init__(parent)
         self.parent = parent
+        self.callback = callback
         self.title("➕ Add Google Drive URL")
        
         self.geometry("500x150")       
@@ -58,11 +59,11 @@ class AddUrlDialog(tk.Toplevel):
         # ttk.Button(btn_frame, text="🚀 Add & Start Sync", command=self._process_url).pack(side="right", padx=5)
         # ttk.Button(btn_frame, text="Cancel", command=self.destroy).pack(side="right", padx=5)
 
-    def _browse_save_path(self):
-        folder = filedialog.askdirectory()
-        if folder:
-            self.ent_save_path.delete(0, tk.END)
-            self.ent_save_path.insert(0, folder)
+    # def _browse_save_path(self):
+    #     folder = filedialog.askdirectory()
+    #     if folder:
+    #         self.ent_save_path.delete(0, tk.END)
+    #         self.ent_save_path.insert(0, folder)
 
     def _process_url(self):
         url_mg = URLManager()
@@ -80,12 +81,15 @@ class AddUrlDialog(tk.Toplevel):
             messagebox.showerror("Invalid URL", "Google Drive URL မမှန်ကန်ပါ။ ကျေးဇူးပြု၍ ပြန်စစ်ပါ။", parent=self)
             return
         
-        return result
+        if self.callback:
+             self.callback(result)
     
         # Background Sync Worker သို့ Task လွှဲပေးခြင်း
         # self.sync_mgr.start_new_sync_job(extracted_id, save_path, target_type)
         
         # messagebox.showinfo("Success", f"{target_type.capitalize()} ID #{extracted_id} ကို Sync Queue ထဲသို့ ထည့်သွင်းပြီးပါပြီ။", parent=self)
-        # self.destroy()
+        self.destroy()
+
+
 
     
