@@ -4,10 +4,11 @@ from ui.dialogs.add_url_dialog import AddUrlDialog
 
 class CustomToolbar(tk.Frame):
     """Menu Bar အောက်တွင် ပေါ်လာမည့် Quick Action Toolbar Component"""
-    def __init__(self, parent):
+    def __init__(self, parent, on_add_url_callback=None):
         # Toolbar ရဲ့ Background အရောင်နှင့် Border များကို သတ်မှတ်သည်
         super().__init__(parent, bg="#EAEAEA", bd=1, relief="raised")
         self.parent = parent
+        self.on_add_url_callback = on_add_url_callback
         self.pack(side="top", fill="x")
        
         self._create_toolbar_buttons()
@@ -52,7 +53,7 @@ class CustomToolbar(tk.Frame):
     # --- Button Action Event Handlers ---
     def _on_add_url(self):
         #   """Login Pop-up ခေါ်ယူခြင်း"""
-        dialog = AddUrlDialog(self.parent)
+        dialog = AddUrlDialog(self.parent,callback=self.on_add_url_callback)
         return dialog
         # မကြာမီ URL Input Dialog ခေါ်ယူသည့် Logic ထည့်ရန်
 
