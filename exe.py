@@ -6,20 +6,24 @@ from tkinter import ttk, messagebox
 from ui.dialogs.login_dialog import LoginDialog
 from ui.dialogs.add_url_dialog import AddUrlDialog
 
+from qr import AddURLDialog
 
+from PyQt6.QtWidgets import QApplication
 
+import sys
 
 def main():
-    root = tk.Tk()
+    # root = tk.Tk()
 
-    root.title("Test")
-    main_window = LoginDialog(root)
-    print(main_window)
-    main_window = AddUrlDialog(root)
-    # main_window = MainWindow()
+    # root.title("Test")
+    # main_window = LoginDialog(root)
+    # print(main_window)
+    # main_window = AddUrlDialog(root)
+    main_window = AddURLDialog()
     return main_window
 
 
 if __name__ == "__main__":
+    app = QApplication(sys.argv)
     app = main()
-    app.mainloop()
+    # app.mainloop()
