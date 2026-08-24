@@ -1,8 +1,18 @@
 import sys
 
-from PyQt6.QtWidgets import QApplication,QMainWindow,QMessageBox,QToolBar
+from PyQt6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QMessageBox,
+    QToolBar,
+    QDialog, 
+    QLineEdit, 
+    QPushButton,
+    QVBoxLayout
+)
 from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import QSize
+from PyQt6.QtCore import QSize,Qt
+from PyQt6.QtCore import pyqtSignal
 
 class MainWindow(QMainWindow):
 
@@ -54,30 +64,69 @@ class MainWindow(QMainWindow):
 
         toolbar = QToolBar("Main Toolbar", self)
 
-        toolbar.setIconSize(QSize(75, 75))
+        toolbar.setIconSize(QSize(32, 32))
         toolbar.setMovable(False)
+
+        toolbar.setToolButtonStyle(
+        Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+        )
 
         self.addToolBar(toolbar)
 
         self.add_action = toolbar.addAction(
-            QIcon("icons/add.ico"),
+            QIcon("icon/add_url.png"),
             "Add"
         )
 
-        self.start_action = toolbar.addAction(
-            QIcon("icons/start.ico"),
-            "Start"
-        )
-
-        self.stop_action = toolbar.addAction(
-            QIcon("icons/stop.ico"),
-            "Stop"
+        self.resume_action = toolbar.addAction(
+            QIcon("icon/resume.png"),
+            "Resume"
         )
 
         self.pause_action = toolbar.addAction(
-            QIcon("icons/pause.ico"),
+            QIcon("icon/pause.png"),
             "Pause"
         )
+        
+        self.stop_action = toolbar.addAction(
+            QIcon("icon/stop.png"),
+            "Stop"
+        )
+
+        self.stop_all_action = toolbar.addAction(
+            QIcon("icon/stop_all.png"),
+            "Stop All"
+        )  
+
+        self.delete_action = toolbar.addAction(
+            QIcon("icon/delete.png"),
+            "Delete"
+        )
+
+        self.options_action = toolbar.addAction(
+            QIcon("icon/options.png"),
+            "Options"
+        )
+
+        self.schdule_action = toolbar.addAction(
+            QIcon("icon/schdule.png"),
+            "Schdule"
+        )
+
+        for action in [
+        self.add_action,
+        self.resume_action,
+        self.pause_action,
+        self.stop_action,
+        self.stop_all_action,
+        self.delete_action,
+        self.options_action,
+        self.schdule_action
+        ]:
+            button = toolbar.widgetForAction(action)
+
+            if button:
+                button.setFixedSize(70, 70)
 
     # =========================
     # Signal
@@ -90,9 +139,14 @@ class MainWindow(QMainWindow):
         self.about_action.triggered.connect(self.show_about)
 
         self.add_action.triggered.connect(self.add_download)
-        self.start_action.triggered.connect(self.start_download)
-        self.stop_action.triggered.connect(self.stop_download)
+        self.resume_action.triggered.connect(self.resume_download)
         self.pause_action.triggered.connect(self.pause_download)
+        self.stop_action.triggered.connect(self.stop_download)
+        self.stop_all_action.triggered.connect(self.stop_all_download)        
+        self.delete_action.triggered.connect(self.delete_download)
+        self.options_action.triggered.connect(self.options_download)
+        self.schdule_action.triggered.connect(self.schdule_download)        
+        
 
     # =========================
     # Logic Test
@@ -112,19 +166,72 @@ class MainWindow(QMainWindow):
                 )
 
     def add_download(self):
-        print("Add ကို နှိပ်လိုက်ပြီ")
+        dialog = AddUrlDialog(self)
 
-    def start_download(self):
-        print("Start ကို နှိပ်လိုက်ပြီ")
-
-    def stop_download(self):
-        print("Stop ကို နှိပ်လိုက်ပြီ")
+        dialog.url_submitted.connect(self.handle_url)
+        dialog.exec()
+                
+    def resume_download(self):
+        print("Resume ကို နှိပ်လိုက်ပြီ")
 
     def pause_download(self):
         print("Pause ကို နှိပ်လိုက်ပြီ")
 
-        
+    def stop_download(self):
+        print("Stop ကို နှိပ်လိုက်ပြီ")
 
+    def stop_all_download(self):
+            print("Stop All ကို နှိပ်လိုက်ပြီ")    
+
+    def delete_download(self):
+        print("delete ကို နှိပ်လိုက်ပြီ")
+
+    def options_download(self):
+        print("Options ကို နှိပ်လိုက်ပြီ")
+
+    def schdule_download(self):
+        print("schdule ကို နှိပ်လိုက်ပြီ")
+
+    # def handle_url(self, url):
+    #     print("Logic ဆီပို့မယ့် URL:", url)
+        
+class AddUrlDialog(QDialog):
+
+    url_submitted = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("Add URL")
+        self.resize(500, 150)
+
+        self.setup_ui()
+
+    def setup_ui(self):
+
+        layout = QVBoxLayout()
+
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("Enter URL...")
+
+        self.go_button = QPushButton("Go")
+
+        layout.addWidget(self.url_input)
+        layout.addWidget(self.go_button)
+
+        self.setLayout(layout)
+
+        self.go_button.clicked.connect(self.go)
+        
+    def go(self):
+
+        url = self.url_input.text().strip()
+
+        if not url:
+            return
+        
+        self.url_submitted.emit(url)        
+        self.accept()
 
 
 app = QApplication(sys.argv)
