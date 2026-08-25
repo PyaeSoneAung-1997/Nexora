@@ -1,73 +1,79 @@
-import tkinter as tk
-from tkinter import ttk
-from ui.dialogs.add_url_dialog import AddUrlDialog
+from PyQt6.QtWidgets import QToolBar
+from PyQt6.QtCore import QSize,Qt
+from PyQt6.QtGui import QIcon,QAction
 
-class CustomToolbar(tk.Frame):
-    """Menu Bar အောက်တွင် ပေါ်လာမည့် Quick Action Toolbar Component"""
-    def __init__(self, parent, on_add_url_callback=None):
-        # Toolbar ရဲ့ Background အရောင်နှင့် Border များကို သတ်မှတ်သည်
-        super().__init__(parent, bg="#EAEAEA", bd=1, relief="raised")
-        self.parent = parent
-        self.on_add_url_callback = on_add_url_callback
-        self.pack(side="top", fill="x")
-       
-        self._create_toolbar_buttons()
+class toolbar(QToolBar):
+    def __init__ (self,main_window):
 
-    def _create_toolbar_buttons(self):
-        # 1. Add URL Button (URL သစ်ထည့်ရန်)
-        self.btn_add_url = ttk.Button(
-            self, text="➕ Add URL", 
-            command=self._on_add_url
-        )
-        self.btn_add_url.pack(side="left", padx=5, pady=4)
+        super().__init__("Main Toolbar",main_window)
+      
+        self.main_window = main_window
+        self.setup()
+    def setup(self):
 
-        # စီးကြောင်းခြားရန် Vertical Line (Separator)
-        ttk.Separator(self, orient="vertical").pack(side="left", fill="y", padx=5, pady=4)
+            self.setIconSize(QSize(32, 32))
+            self.setMovable(False)
 
-        # 2. Start All Button
-        self.btn_start = ttk.Button(
-            self, text="▶️ Start All", command=self._on_start_all
-        )
-        self.btn_start.pack(side="left", padx=2, pady=4)
+            self.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+            )
 
-        # 3. Pause All Button
-        self.btn_pause = ttk.Button(
-            self, text="⏸️ Pause All", command=self._on_pause_all
-        )
-        self.btn_pause.pack(side="left", padx=2, pady=4)
+            self.add_url_action = QAction(
+                QIcon("icon/add_url.png"),
+                "Add URL", self.main_window
+            )
 
-        # 4. Delete Completed Button
-        self.btn_clear = ttk.Button(
-            self, text="🗑️ Clear Finished", command=self._on_clear_finished
-        )
-        self.btn_clear.pack(side="left", padx=2, pady=4)
+            self.addAction(
+                self.add_url_action
+           )
 
-        ttk.Separator(self, orient="vertical").pack(side="left", fill="y", padx=5, pady=4)
+            
+            self.resume_action = self.addAction(
+                QIcon("icon/resume.png"),
+                "Resume"
+            )
 
-        # 5. Settings Button
-        self.btn_settings = ttk.Button(
-            self, text="⚙️ Settings", command=self._on_settings
-        )
-        self.btn_settings.pack(side="left", padx=2, pady=4)
+            self.pause_action = self.addAction(
+                QIcon("icon/pause.png"),
+                "Pause"
+            )
+            
+            self.stop_action = self.addAction(
+                QIcon("icon/stop.png"),
+                "Stop"
+            )
 
-    # --- Button Action Event Handlers ---
-    def _on_add_url(self):
-        #   """Login Pop-up ခေါ်ယူခြင်း"""
-        dialog = AddUrlDialog(self.parent,callback=self.on_add_url_callback)
-        return dialog
-        # မကြာမီ URL Input Dialog ခေါ်ယူသည့် Logic ထည့်ရန်
+            self.stop_all_action = self.addAction(
+                QIcon("icon/stop_all.png"),
+                "Stop All"
+            )  
 
-    def _on_start_all(self):
-        print("Toolbar: Start All Downloads")
+            self.delete_action = self.addAction(
+                QIcon("icon/delete.png"),
+                "Delete"
+            )
 
-    def _on_pause_all(self):
-        print("Toolbar: Pause All Downloads")
+            self.options_action = self.addAction(
+                QIcon("icon/options.png"),
+                "Options"
+            )
 
-    def _on_clear_finished(self):
-        print("Toolbar: Clear Finished Tasks")
+            self.schdule_action = self.addAction(
+                QIcon("icon/schdule.png"),
+                "Schdule"
+            )
 
-    def _on_settings(self):
-        print("Toolbar: Open Settings")
+            for action in [
+            self.add_url_action,
+            self.resume_action,
+            self.pause_action,
+            self.stop_action,
+            self.stop_all_action,
+            self.delete_action,
+            self.options_action,
+            self.schdule_action
+            ]:
+                button = self.widgetForAction(action)
 
-  
-  
+                if button:
+                    button.setFixedSize(70, 70)

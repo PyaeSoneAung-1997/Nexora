@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QMainWindow,QApplication
-import sys
-from uii import MainWindow
+# from PyQt6.QtWidgets import QMainWindow,QApplication
+# import sys
+# from uii import MainWindow
 
 # class MainWindow(QMainWindow):
 
@@ -13,9 +13,9 @@ from uii import MainWindow
 #         self.setWindowTitle("Nexora")
 #         self.resize(1200, 700)
 
-app = QApplication(sys.argv)
+# app = QApplication(sys.argv)
 
-window = MainWindow()
-window.show()
+# window = MainWindow()
+# window.show()
 
-sys.exit(app.exec())
+# sys.exit(app.exec())
