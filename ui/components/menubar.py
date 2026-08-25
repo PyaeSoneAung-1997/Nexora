@@ -7,7 +7,6 @@ class menubar(QMenuBar):
                 self.setup()                
 
         def setup(self):
-
                 
 
                 #File

@@ -5,18 +5,20 @@ from PyQt6.QtGui import QIcon,QAction
 class toolbar(QToolBar):
     def __init__ (self,main_window):
 
-        super().__init__("Main Toolbar",main_window)
-      
+        super().__init__("Main Toolbar",main_window)      
         self.main_window = main_window
         self.setup()
+
     def setup(self):
 
             self.setIconSize(QSize(32, 32))
+
             self.setMovable(False)
 
             self.setToolButtonStyle(
             Qt.ToolButtonStyle.ToolButtonTextUnderIcon
             )
+            
 
             self.add_url_action = QAction(
                 QIcon("icon/add_url.png"),
@@ -25,7 +27,7 @@ class toolbar(QToolBar):
 
             self.addAction(
                 self.add_url_action
-           )
+            )
 
             
             self.resume_action = self.addAction(
@@ -63,6 +65,11 @@ class toolbar(QToolBar):
                 "Schdule"
             )
 
+            self.addAction(
+                self.schdule_action
+            )
+      
+
             for action in [
             self.add_url_action,
             self.resume_action,
@@ -77,3 +84,7 @@ class toolbar(QToolBar):
 
                 if button:
                     button.setFixedSize(70, 70)
+        
+
+           
+

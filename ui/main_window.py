@@ -19,6 +19,8 @@ from ui.components.toolbar import toolbar
 from ui.components.menubar import menubar
 from ui.dialogs.add_url_dialog import AddUrlDialog
 
+from core.url.url_manager import URLManager
+
 class MainWindow(QMainWindow):
 
     def __init__(self):
@@ -30,18 +32,25 @@ class MainWindow(QMainWindow):
 
         self.menu_bar = menubar(self)
 
-        self.setMenuBar(self.menu_bar)
-        
-        self.tool_bar = toolbar(self)
-        
+        self.setMenuBar(self.menu_bar) 
+
+        self.tool_bar = toolbar(self)   
+
         self.addToolBar(self.tool_bar)
 
         self.tool_bar.add_url_action.triggered.connect(
             self.open_add_url_dialog
         )
+        self.tool_bar.schdule_action.triggered.connect(
+            self.open_schdule_dialog
+        )
+
+        self.url_manager = URLManager()
+    #Menubar
     def new_file(self):
         print("Click New File")
-        
+
+    #Toolbar  
     def open_add_url_dialog(self):
 
         dialog = AddUrlDialog(self)
@@ -51,12 +60,16 @@ class MainWindow(QMainWindow):
 
         dialog.exec()
 
+    #Toolbar
     def handle_url(self,url):
-        print("Main Window Url receive")
-        print("Url :", url)
+        print(self.url_manager.analyze(url))
+
+    #Schdule
+    def open_schdule_dialog(self):
+        print("Oki Schdule")
+        # dialog = SchduleDialog(self)
         
-#     def new_file(self):
-#         print("New ကို နှိပ်လိုက်ပြီ")
+        
 
 #     def open_file(self):
 #         print("Open ကို နှိပ်လိုက်ပြီ")
