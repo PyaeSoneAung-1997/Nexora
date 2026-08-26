@@ -16,7 +16,7 @@ def detect_url_type(url: str) -> dict:
     # 2. Direct File Extension Detection
     file_extensions = (
         ".zip", ".rar", ".7z", ".tar", ".gz",
-        ".mp4", ".mkv", ".avi", ".mp3",
+        ".mp4", ".mkv", ".avi", ".mp3",".bin",
         ".pdf", ".iso", ".exe", ".msi", ".dmg"
     )
 

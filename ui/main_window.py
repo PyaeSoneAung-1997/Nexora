@@ -1,22 +1,22 @@
 import sys
 
 from PyQt6.QtWidgets import (
-    QApplication,
+    # QApplication,
     QMainWindow,
     QMessageBox,
-    QToolBar,
-    QDialog, 
-    QLineEdit, 
-    QPushButton,
-    QVBoxLayout
+    # QToolBar,
+    # QDialog, 
+    # QLineEdit, 
+    # QPushButton,
+    # QVBoxLayout
 )
 from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import pyqtSignal
-from ui.components import toolbar,menubar
+# from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QMainWindow
 
 from ui.components.toolbar import toolbar
 from ui.components.menubar import menubar
+
 from ui.dialogs.add_url_dialog import AddUrlDialog
 
 from core.url.url_manager import URLManager
@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         self.tool_bar = toolbar(self)   
 
         self.addToolBar(self.tool_bar)
-
+        #Add url dialog
         self.tool_bar.add_url_action.triggered.connect(
             self.open_add_url_dialog
         )
@@ -46,6 +46,7 @@ class MainWindow(QMainWindow):
         )
 
         self.url_manager = URLManager()
+
     #Menubar
     def new_file(self):
         print("Click New File")
@@ -62,8 +63,20 @@ class MainWindow(QMainWindow):
 
     #Toolbar
     def handle_url(self,url):
-        print(self.url_manager.analyze(url))
+        url_check = self.url_manager.analyze(url)
 
+        if not url_check["valid"]:
+            QMessageBox.warning(
+                self,
+                "Invalid URL",
+                url_check["error"]
+            )
+            self.open_add_url_dialog()
+            return 
+
+        print(url_check) 
+        
+    
     #Schdule
     def open_schdule_dialog(self):
         print("Oki Schdule")
