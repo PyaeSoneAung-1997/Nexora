@@ -21,6 +21,8 @@ from ui.dialogs.add_url_dialog import AddUrlDialog
 
 from core.url.url_manager import URLManager
 
+from core.download.direct_download_manager import DirectManager
+
 class MainWindow(QMainWindow):
 
     def __init__(self):
@@ -46,6 +48,8 @@ class MainWindow(QMainWindow):
         )
 
         self.url_manager = URLManager()
+
+        self.direct_manager = DirectManager( )
 
     #Menubar
     def new_file(self):
@@ -76,7 +80,11 @@ class MainWindow(QMainWindow):
 
         print(url_check) 
         
-    
+        if url_check["type"] == "direct_file":
+
+            self.direct_manager.add_url(
+                url_check["url"]
+            )
     #Schdule
     def open_schdule_dialog(self):
         print("Oki Schdule")
