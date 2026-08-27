@@ -64,8 +64,10 @@ class AddUrlDialog(QDialog):
         # URL ကို MainWindow ဆီပို့
         self.url_submitted.emit(url)
 
-        # Dialog ပိတ်
+        
+        
         self.accept()
+        
 
     
             

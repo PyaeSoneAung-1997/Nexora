@@ -8,11 +8,11 @@ from PyQt6.QtWidgets import (
     # QDialog, 
     # QLineEdit, 
     # QPushButton,
-    # QVBoxLayout
+    QVBoxLayout
 )
 from PyQt6.QtGui import QIcon
 # from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QMainWindow
+from PyQt6.QtWidgets import QMainWindow,QWidget
 
 from ui.components.toolbar import toolbar
 from ui.components.menubar import menubar
@@ -21,7 +21,10 @@ from ui.dialogs.add_url_dialog import AddUrlDialog
 
 from core.url.url_manager import URLManager
 
+from core.database.db_manager import DatabaseManager
 from core.download.direct_download_manager import DirectManager
+from core.download.driect_downloader import DirectDownloader
+from ui.widget_container import DownloadPage
 
 class MainWindow(QMainWindow):
 
@@ -49,8 +52,20 @@ class MainWindow(QMainWindow):
 
         self.url_manager = URLManager()
 
-        self.direct_manager = DirectManager( )
+        self.db_manager = DatabaseManager()
 
+        self.direct_manager = DirectManager(
+            self.db_manager
+        )
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+
+        layout = QVBoxLayout(central_widget)
+        self.download_page = DownloadPage(self)
+
+        layout.addWidget(
+            self.download_page
+        )
     #Menubar
     def new_file(self):
         print("Click New File")
@@ -64,7 +79,44 @@ class MainWindow(QMainWindow):
         )
 
         dialog.exec()
+    def handle_pause(self, download_id):
 
+        self.direct_manager.pause_download(
+            download_id
+        )
+
+        widget = self.download_page.download_widgets.get(
+            download_id
+        )
+
+        if widget:
+            widget.set_paused()
+
+    def handle_resume(self, download_id):
+
+        self.direct_manager.resume_download(
+            download_id
+        )
+
+        widget = self.download_page.download_widgets.get(
+            download_id
+        )
+
+        if widget:
+            widget.set_resumed()
+
+    def handle_stop(self, download_id):
+
+        self.direct_manager.stop_download(
+            download_id
+        )
+
+        widget = self.download_page.download_widgets.get(
+            download_id
+        )
+
+        if widget:
+            widget.set_stopped()
     #Toolbar
     def handle_url(self,url):
         url_check = self.url_manager.analyze(url)
@@ -78,20 +130,70 @@ class MainWindow(QMainWindow):
             self.open_add_url_dialog()
             return 
 
-        print(url_check) 
+        # print(url_check) 
         
         if url_check["type"] == "direct_file":
-
-            self.direct_manager.add_url(
+            download_id = self.direct_manager.add_url(
                 url_check["url"]
             )
+
+            # print("Direct URL added:", download_id)
+            widget = self.download_page.add_download(
+                download_id,
+                "Downloading...."
+            )
+            # print(widget)
+
+            widget.pause_clicked.connect(
+                lambda checked=False:
+                 self.handle_pause(
+                    download_id
+                )
+            )
+
+
+            widget.resume_clicked.connect(
+                lambda checked=False:
+                    self.handle_resume(
+                        download_id
+                    )
+            )
+
+            widget.stop_clicked.connect(
+                lambda checked=False:
+                    self.handle_stop(
+                        download_id
+                    )
+            )
+
+            self.direct_manager.start_download(
+                download_id,
+
+                lambda progress:
+                    self.download_page.update_progress(
+                        download_id,
+                        progress
+                    ),
+
+                lambda success:
+                    self.download_page.update_finished(
+                        download_id,
+                        success
+                    )
+            )
+
+            
+
+
+            
     #Schdule
     def open_schdule_dialog(self):
         print("Oki Schdule")
         # dialog = SchduleDialog(self)
         
-        
-
+    def download_progress(self, progress):
+        print("UI Progress:", progress)  
+# https://cdn.truefilesize.com/test/test-10mb.bin
 #     def open_file(self):
 #         print("Open ကို နှိပ်လိုက်ပြီ")
 
