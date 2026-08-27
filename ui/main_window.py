@@ -25,6 +25,7 @@ from core.database.db_manager import DatabaseManager
 from core.download.direct_download_manager import DirectManager
 from core.download.driect_downloader import DirectDownloader
 from ui.widget_container import DownloadPage
+from core.download.aria2_engine import Aria2Engine
 
 class MainWindow(QMainWindow):
 
@@ -66,6 +67,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(
             self.download_page
         )
+
+        self.aria2_engine = Aria2Engine()
+        self.aria2_engine.start()
     #Menubar
     def new_file(self):
         print("Click New File")
