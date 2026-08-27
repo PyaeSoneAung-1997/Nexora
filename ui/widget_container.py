@@ -14,9 +14,7 @@ class DownloadPage(QWidget):
 
         super().__init__(parent)
 
-        self.download_layout = QVBoxLayout(
-            self
-        )
+        self.download_layout = QVBoxLayout(self)        
 
         self.download_widgets = {}
 

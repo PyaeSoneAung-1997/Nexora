@@ -22,57 +22,22 @@ class DownloadItemWidget(QWidget):
 
         self.download_id = download_id
 
-        # -------------------------
-        # File Name
-        # -------------------------
+        self.file_name_label = QLabel(file_name)
 
-        self.file_name_label = QLabel(
-            file_name
-        )
-
-        # -------------------------
-        # Status
-        # -------------------------
-
-        self.status_label = QLabel(
-            "Queued"
-        )
-
-        # -------------------------
-        # Progress Bar
-        # -------------------------
+        self.status_label = QLabel("Queued")
 
         self.progress_bar = QProgressBar()
 
-        self.progress_bar.setRange(
-            0,
-            100
-        )
+        self.progress_bar.setRange( 0, 100 )
 
-        self.progress_bar.setValue(
-            0
-        )
+        self.progress_bar.setValue( 0 )
 
-        # -------------------------
-        # Buttons
-        # -------------------------
+        self.pause_button = QPushButton( "Pause" )
 
-        self.pause_button = QPushButton(
-            "Pause"
-        )
+        self.resume_button = QPushButton( "Resume" )
 
-        self.resume_button = QPushButton(
-            "Resume"
-        )
-
-        self.stop_button = QPushButton(
-            "Stop"
-        )
-
-        # -------------------------
-        # Button Signals
-        # -------------------------
-
+        self.stop_button = QPushButton( "Stop" )
+        
         self.pause_button.clicked.connect(
             self.pause_clicked.emit
         )
@@ -84,10 +49,6 @@ class DownloadItemWidget(QWidget):
         self.stop_button.clicked.connect(
             self.stop_clicked.emit
         )
-
-        # -------------------------
-        # Layout
-        # -------------------------
 
         info_layout = QVBoxLayout()
 
@@ -129,10 +90,6 @@ class DownloadItemWidget(QWidget):
             button_layout
         )
 
-    # -------------------------
-    # Progress Update
-    # -------------------------
-
     def set_progress(self, progress):
 
         self.progress_bar.setValue(
@@ -142,10 +99,6 @@ class DownloadItemWidget(QWidget):
         self.status_label.setText(
             f"Downloading... {progress}%"
         )
-
-    # -------------------------
-    # Completed
-    # -------------------------
 
     def set_completed(self):
 
@@ -157,9 +110,6 @@ class DownloadItemWidget(QWidget):
             "Completed"
         )
 
-    # -------------------------
-    # Failed
-    # -------------------------
 
     def set_failed(self, error):
 
