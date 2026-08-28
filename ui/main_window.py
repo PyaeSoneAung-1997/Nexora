@@ -26,6 +26,7 @@ from core.download.direct_download_manager import DirectManager
 from core.download.driect_downloader import DirectDownloader
 from ui.widget_container import DownloadPage
 from core.download.aria2_engine import Aria2Engine
+from core.download.aria2_worker import Aria2DownloadWorker
 
 class MainWindow(QMainWindow):
 
@@ -70,6 +71,28 @@ class MainWindow(QMainWindow):
 
         self.aria2_engine = Aria2Engine()
         self.aria2_engine.start()
+        
+
+        version = self.aria2_engine.get_version()
+
+        print(
+            "aria2 version:",
+            version
+        )
+
+        gid = self.aria2_engine.add_download(
+            "https://cdn.truefilesize.com/test/test-10mb.bin",
+            "downloads"
+        )
+
+        print("Download GID:", gid)
+
+        result = Aria2DownloadWorker(self.aria2_engine,gid)
+        print(result)
+        
+
+           
+            
     #Menubar
     def new_file(self):
         print("Click New File")
