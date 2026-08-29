@@ -48,28 +48,35 @@ class Aria2DownloadWorker(QObject):
                     )
                 )
 
-                # -------------------------
-                # Progress
-                # -------------------------
+                speed = int(
+                    status.get(
+                        "downloadSpeed",
+                        0
+                    )
+                )
 
                 if total > 0:
-
-                    progress = int(
+                    percent = int(
                         completed * 100 / total
                     )
 
-                    self.progress.emit(
-                        progress
-                    )
+                else:
+                    percent = 0
+                
 
-                print(
-                    "Aria2:",
-                    state,
-                    completed,
-                    "/",
-                    total
+                self.progress.emit(
+                    {
+                        "status":state,
+                        "completed":completed,
+                        "total":total,
+                        "speed":speed,
+                        "percent":percent
+                    }
                 )
 
+                print(
+                    "Aria2:",state,completed,"/",total,"Speed:",speed
+                )
                 # -------------------------
                 # Completed
                 # -------------------------
@@ -77,7 +84,13 @@ class Aria2DownloadWorker(QObject):
                 if state == "complete":
 
                     self.progress.emit(
-                        100
+                        {
+                        "status":"complete",
+                        "completed":completed,
+                        "total": total,
+                        "speed":0,
+                        "percent":100
+                        }
                     )
 
                     self.finished.emit(
@@ -88,6 +101,7 @@ class Aria2DownloadWorker(QObject):
 
                 # -------------------------
                 # Failed
+                # 
                 # -------------------------
 
                 if state == "error":
@@ -101,7 +115,11 @@ class Aria2DownloadWorker(QObject):
                 # -------------------------
                 # Wait
                 # -------------------------
-
+                if state == "removed":
+                    self.finished.emit(
+                        False
+                    )
+                    return
                 time.sleep(0.5)
 
         except Exception as e:

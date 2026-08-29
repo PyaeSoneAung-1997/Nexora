@@ -60,8 +60,12 @@ class Aria2Engine:
         result = response.json()
 
         if "error" in result:
+            error = result["error"]
+
             raise RuntimeError(
-                result["error"]
+                f"aria2 RPC Error"
+                f"{error.get('code')}:"
+                f"{error.get('message')}"
             )
 
         return result["result"]
@@ -94,6 +98,7 @@ class Aria2Engine:
             {
                 "dir": download_dir,
                 "continue": "true",
+                "max-overall-download-limit":"100k"
                 # "max-connection-per-server": "4",
                 # "split": "4"
             }

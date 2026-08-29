@@ -8,12 +8,12 @@ from config import (
     APP_NAME,
     APP_VERSION
 )
-# from core.database.db_manager import DatabaseManager
+from core.database.db_manager import DatabaseManager
 
 def main():
-    # create_app_directories()
-    # db = DatabaseManager()
-    # print("💾 SQLite Database initialized successfully.")
+    create_app_directories()
+    db = DatabaseManager()
+    print("💾 SQLite Database initialized successfully.")
 
     app = QApplication(sys.argv)
 

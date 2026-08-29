@@ -1,8 +1,8 @@
 from PyQt6.QtCore import QThread
 import threading
 from core.database.db_manager import DatabaseManager
-from core.download.driect_downloader import DirectDownloader
-from core.download.download_worker import DownloadWorker
+# from core.download.driect_downloader import DirectDownloader
+# from core.download.download_worker import DownloadWorker
 from core.download.aria2_worker import Aria2DownloadWorker
 
 class DirectManager:
@@ -60,7 +60,7 @@ class DirectManager:
             FROM downloads
             WHERE id = ?
             """,
-            (download_id)
+            (download_id,)
         )
 
         if not download:
@@ -74,7 +74,7 @@ class DirectManager:
         url = download["url"]
 
         try:
-            gid = self.aria2.addadd_download(
+            gid = self.aria2.add_download(
                 url,
                 "downloads"
             )
@@ -142,6 +142,221 @@ class DirectManager:
             worker.finished.connect(
                 finished_callback
             )
+
+        worker.finished.connect(
+            thread.quit
+        )
+        worker.finished.connect(
+            worker.deleteLater
+        )
+
+        thread.finished.connect(
+            thread.deleteLater
+        )
+
+        thread.finished.connect(
+            lambda:
+            self._thread_finished(
+                download_id
+            )
+        )
+
+        self.threads[
+            download_id
+        ] = thread
+
+        self.workers[
+            download_id
+        ] = worker
+
+        thread.start()
+
+    def _thread_finished(self,download_id):
+        self.threads.pop(
+            download_id,
+            None
+        )
+        self.workers.pop(
+            download_id,
+            None
+        )
+
+        print( 
+            "Download thread finished",
+            download_id
+        )
+    def pause_download(self, download_id):
+        gid = self.gids.get(
+            download_id 
+        )
+
+        if not gid:
+            print(
+                "GID not found:",
+                download_id
+            )
+
+            return False
+
+        try:
+            status = self.aria2.pause(
+                gid
+            )
+            state = status.get("status")
+
+            if state == "paused":
+                print("Already paused:",download_id)
+
+            if state != "active":
+                print("Cannot pause. Status:", state)
+                return False
+
+            self.aria2.pause(
+                gid
+            )
+
+            self.db.execute_query(
+            """
+            UPDATE downloads
+            SET status = 'paused'
+            WHERE id = ?
+            """,
+            (download_id,)
+            )
+            print(
+                "Download paused:",
+                download_id
+            )
+            return True
+        except Exception as e:
+            print(
+                "Pause Failed:",
+                e
+            )
+
+            return False
+
+    def resume_download(self, download_id):
+        gid = self.gids.get(
+            download_id
+        )
+
+        if not gid:
+            print(
+                "GID not found:",
+                download_id    
+            )
+
+            return False
+        try:
+            status = self.aria2.get_status(
+                gid
+            )
+
+            state = status.get(
+                "status"
+            )
+            if state == "active":
+                print( "Already downloading:", download_id)
+                return True
+
+            if state != "paused":
+                print(
+                    "Cannot resume. Status:",
+                    state
+                )
+
+                return False
+            
+            self.aria2.resume(
+                gid
+            )
+
+            self.db.execute_query(
+            """
+            UPDATE downloads
+            SET status = 'downloading',
+            WHERE id = ?
+            """,
+            (download_id,)
+            )
+
+            print(
+                "Download resumed:",
+                download_id
+            )
+
+            return True
+
+        except Exception as e:
+            print(
+                "Resume failed:",
+                e  
+            )
+
+            return False
+
+    def stop_download(self, download_id):
+
+        gid = self.gids.get(
+                download_id
+        )
+
+        if not gid:
+            print(
+                "GID not found:",
+                download_id
+            )
+            return False
+
+        try:
+            status = self.aria2.get_status(
+                        gid
+            )
+            
+            state = status.get(
+                            "status"
+            )
+            if state in ("complete","error","removed"):
+                print( 
+                    "Cannot stop. Status:", state
+                )
+                return False
+            
+             
+                        
+            self.aria2.stop(
+                gid
+            )
+
+            self.db.execute_query(
+            """
+            UPDATE downloads
+            SET status = 'stopped
+            WHERE id = ?
+            """,
+                (download_id,)
+            )
+
+            print(
+                "Download stopped:",
+                download_id
+            )
+
+            return True
+
+        except Exception as e:
+            print(
+                "Stop Failed:",
+                e
+            )
+
+            return False
+
+    def get_gid(self,download_id):
+        return self.gids.get(
+            download_id
+        )
     # def start_download(self, download_id, progress_callback=None,
     #                    finished_callback=None):
 
