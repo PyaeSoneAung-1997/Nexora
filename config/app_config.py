@@ -5,7 +5,7 @@ from config.app_config_manager import ConfigManager
 
 
 class AppConfig:
-    """System Configurations များကို Single Interface ဖွငျ့ ခေါျယူအသုံးပွုနိုငျသညျ့ Wrapper"""
+    """System Configurations များကို Single Interface ဖြင့်ခေါ်သုံးနိုင်သည့် Wrapper"""
 
     def __init__(self):
         self.data_dir = APP_DATA_DIR

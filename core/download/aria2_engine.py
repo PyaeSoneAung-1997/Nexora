@@ -98,9 +98,9 @@ class Aria2Engine:
             {
                 "dir": download_dir,
                 "continue": "true",
-                "max-overall-download-limit":"100k"
-                # "max-connection-per-server": "4",
-                # "split": "4"
+                "max-overall-download-limit":"5k",
+                "max-connection-per-server": "4",
+                "split": "4"
             }
         ]
 

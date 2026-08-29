@@ -8,7 +8,7 @@ from PyQt6.QtCore import (
 
 class Aria2DownloadWorker(QObject):
 
-    progress = pyqtSignal(int)
+    progress = pyqtSignal(dict)
     finished = pyqtSignal(bool)
 
     def __init__(self, aria2_engine, gid):

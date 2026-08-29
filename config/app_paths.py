@@ -32,7 +32,6 @@ TEMP_DIR = APP_DATA_DIR / "temp"
 EXPORT_DIR = APP_DATA_DIR / "exports"
 
 DATABASE_PATH = APP_DATA_DIR / "nexora.db"
-SETTINGS_FILE = APP_DATA_DIR / "settings.json"
 DOWNLOAD_DIR  = APP_DATA_DIR / "downloads" 
 
 

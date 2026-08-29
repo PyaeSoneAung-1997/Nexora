@@ -90,25 +90,71 @@ class DownloadItemWidget(QWidget):
             button_layout
         )
 
-    def set_progress(self, progress):
+    # def set_progress(self, progress):
+
+    #     self.progress_bar.setValue(
+    #         progress
+    #     )
+
+    #     self.status_label.setText(
+    #         f"Downloading... {progress}%"
+    #     )
+    def update_download_info(self, data):
+        status = data.get("status")
+        completed = data.get("completed", 0)
+        total = data.get("total", 0)
+        speed = data.get("speed", 0)
+        percent = data.get("percent", 0)
 
         self.progress_bar.setValue(
-            progress
+            percent
         )
 
-        self.status_label.setText(
-            f"Downloading... {progress}%"
-        )
+        completed_mb = completed / 1024 / 1024
+        total_mb = total / 1024 / 1024
+        speed_mb = speed / 1024 / 1024
 
-    def set_completed(self):
+        if speed_mb >= 1:
+            speed_text = f"{speed_mb:.2f} MB/s"
+        else:
+            speed_kb = speed / 1024
+            speed_text = f"{speed_kb:.2f} KB/s"
 
+        if status == "active":
+            self.status_label.setText(
+                f"{percent}% | "
+                f"{completed_mb:.1f} MB /"
+                f"{total_mb:.2f} MB | "
+                f"Speed: {speed_text}"
+            )
+        elif status == "paused":
+            self.status_label.setText(
+                f"Paused | "
+                f"{percent}% | "
+                f"{completed_mb:.1f} MB /"
+                f"{total_mb:.2f} MB"
+            )
+    def set_completed(self,total=0):
         self.progress_bar.setValue(
             100
         )
 
+        total_mb = (total / 1024 / 1024)
+
         self.status_label.setText(
-            "Completed"
+            f"Completed | " 
+            f"{total_mb:.1f} MB"
         )
+
+    # def set_completed(self):
+
+    #     self.progress_bar.setValue(
+    #         100
+    #     )
+
+    #     self.status_label.setText(
+    #         "Completed"
+    #     )
 
 
     def set_failed(self, error):

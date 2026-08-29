@@ -37,14 +37,14 @@ class DownloadPage(QWidget):
  
         return widget
 
-    def update_progress(self, download_id, progress):
+    def update_progress(self, download_id, data):
         widget = self.download_widgets.get(
             download_id
         )
 
         if widget:
-            widget.set_progress(
-                progress
+            widget.update_download_info(
+                data
             )
 
     def update_finished(

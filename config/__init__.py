@@ -1,4 +1,11 @@
-from config.app_paths import APP_DATA_DIR, DATABASE_PATH, LOGS_DIR, DOWNLOAD_DIR, TEMP_DIR, create_app_directories
+from config.app_paths import (
+    APP_DATA_DIR, 
+    DATABASE_PATH, 
+    LOGS_DIR, 
+    DOWNLOAD_DIR, 
+    TEMP_DIR, 
+    create_app_directories
+)
 from config.app_constants import (
     APP_NAME,
     APP_VERSION,
@@ -13,4 +20,5 @@ from config.app_constants import (
     WORKSPACE_EXPORT_EXT_MAP
 )
 from config.app_constants import DEFAULT_APP_SETTINGS
-# from config.app_config import AppConfig, ConfigManager
+from config.app_config import AppConfig
+from config.app_config_manager import ConfigManager

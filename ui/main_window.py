@@ -1,13 +1,8 @@
 import sys
 
 from PyQt6.QtWidgets import (
-    # QApplication,
     QMainWindow,
     QMessageBox,
-    # QToolBar,
-    # QDialog, 
-    # QLineEdit, 
-    # QPushButton,
     QVBoxLayout
 )
 from PyQt6.QtGui import QIcon
@@ -21,12 +16,12 @@ from ui.dialogs.add_url_dialog import AddUrlDialog
 
 from core.url.url_manager import URLManager
 
-from core.database.db_manager import DatabaseManager
-from core.download.direct_download_manager import DirectManager
-from core.download.driect_downloader import DirectDownloader
-from ui.widget_container import DownloadPage
-from core.download.aria2_engine import Aria2Engine
-from core.download.aria2_worker import Aria2DownloadWorker
+# from core.database.db_manager import DatabaseManager
+# from core.download.direct_download_manager import DirectManager
+# from core.download.driect_downloader import DirectDownloader
+# from ui.widget_container import DownloadPage
+# from core.download.aria2_engine import Aria2Engine
+# from core.download.aria2_worker import Aria2DownloadWorker
 
 class MainWindow(QMainWindow):
 
@@ -44,6 +39,7 @@ class MainWindow(QMainWindow):
         self.tool_bar = toolbar(self)   
 
         self.addToolBar(self.tool_bar)
+
         #Add url dialog
         self.tool_bar.add_url_action.triggered.connect(
             self.open_add_url_dialog
@@ -52,26 +48,26 @@ class MainWindow(QMainWindow):
             self.open_schdule_dialog
         )
 
-        self.url_manager = URLManager()
+        # self.url_manager = URLManager()
 
-        self.db_manager = DatabaseManager()
+        # self.db_manager = DatabaseManager()
 
-        self.aria2_engine = Aria2Engine()
-        self.aria2_engine.start()
-        self.direct_manager = DirectManager(
-            self.db_manager,
-            self.aria2_engine
-        )
+        # self.aria2_engine = Aria2Engine()
+        # self.aria2_engine.start()
+        # self.direct_manager = DirectManager(
+        #     self.db_manager,
+        #     self.aria2_engine
+        # )
 
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
+        # central_widget = QWidget()
+        # self.setCentralWidget(central_widget)
 
-        layout = QVBoxLayout(central_widget)
-        self.download_page = DownloadPage(self)
+        # layout = QVBoxLayout(central_widget)
+        # self.download_page = DownloadPage(self)
 
-        layout.addWidget(
-            self.download_page
-        )
+        # layout.addWidget(
+        #     self.download_page
+        # )
 
            
     #Menubar
@@ -87,108 +83,108 @@ class MainWindow(QMainWindow):
         )
 
         dialog.exec()
-    def handle_pause(self, download_id):
+    # def handle_pause(self, download_id):
 
-        self.direct_manager.pause_download(
-            download_id
-        )
+    #     self.direct_manager.pause_download(
+    #         download_id
+    #     )
 
-        widget = self.download_page.download_widgets.get(
-            download_id
-        )
+    #     widget = self.download_page.download_widgets.get(
+    #         download_id
+    #     )
 
-        if widget:
-            widget.set_paused()
+    #     if widget:
+    #         widget.set_paused()
 
-    def handle_resume(self, download_id):
+    # def handle_resume(self, download_id):
 
-        self.direct_manager.resume_download(
-            download_id
-        )
+    #     self.direct_manager.resume_download(
+    #         download_id
+    #     )
 
-        widget = self.download_page.download_widgets.get(
-            download_id
-        )
+    #     widget = self.download_page.download_widgets.get(
+    #         download_id
+    #     )
 
-        if widget:
-            widget.set_resumed()
+    #     if widget:
+    #         widget.set_resumed()
 
-    def handle_stop(self, download_id):
+    # def handle_stop(self, download_id):
 
-        self.direct_manager.stop_download(
-            download_id
-        )
+    #     self.direct_manager.stop_download(
+    #         download_id
+    #     )
 
-        widget = self.download_page.download_widgets.get(
-            download_id
-        )
+    #     widget = self.download_page.download_widgets.get(
+    #         download_id
+    #     )
 
-        if widget:
-            widget.set_stopped()
+    #     if widget:
+    #         widget.set_stopped()
     #Toolbar
-    def handle_url(self,url):
-        url_check = self.url_manager.analyze(url)
+    # def handle_url(self,url):
+    #     url_check = self.url_manager.analyze(url)
 
-        if not url_check["valid"]:
-            QMessageBox.warning(
-                self,
-                "Invalid URL",
-                url_check["error"]
-            )
-            self.open_add_url_dialog()
-            return 
+    #     if not url_check["valid"]:
+    #         QMessageBox.warning(
+    #             self,
+    #             "Invalid URL",
+    #             url_check["error"]
+    #         )
+    #         self.open_add_url_dialog()
+    #         return 
 
-        # print(url_check) 
+    #     # print(url_check) 
         
-        if url_check["type"] == "direct_file":
-            download_id = self.direct_manager.add_url(
-                url_check["url"]
-            )
+    #     if url_check["type"] == "direct_file":
+    #         download_id = self.direct_manager.add_url(
+    #             url_check["url"]
+    #         )
 
-            # print("Direct URL added:", download_id)
-            widget = self.download_page.add_download(
-                download_id,
-                "Downloading...."
-            )
-            # print(widget)
+    #         # print("Direct URL added:", download_id)
+    #         widget = self.download_page.add_download(
+    #             download_id,
+    #             "Downloading...."
+    #         )
+    #         # print(widget)
 
-            widget.pause_clicked.connect(
-                lambda checked=False:
-                 self.handle_pause(
-                    download_id
-                )
-            )
+    #         widget.pause_clicked.connect(
+    #             lambda checked=False:
+    #              self.handle_pause(
+    #                 download_id
+    #             )
+    #         )
 
 
-            widget.resume_clicked.connect(
-                lambda checked=False:
-                    self.handle_resume(
-                        download_id
-                    )
-            )
+    #         widget.resume_clicked.connect(
+    #             lambda checked=False:
+    #                 self.handle_resume(
+    #                     download_id
+    #                 )
+    #         )
 
-            widget.stop_clicked.connect(
-                lambda checked=False:
-                    self.handle_stop(
-                        download_id
-                    )
-            )
+    #         widget.stop_clicked.connect(
+    #             lambda checked=False:
+    #                 self.handle_stop(
+    #                     download_id
+    #                 )
+    #         )
 
-            self.direct_manager.start_download(
-                download_id,
+    #         self.direct_manager.start_download(
+    #             download_id,
 
-                lambda progress:
-                    self.download_page.update_progress(
-                        download_id,
-                        progress
-                    ),
+    #             lambda data:                    
+    #                 self.download_page.update_progress(
+    #                     download_id,
+    #                     data
+    #                 ),
 
-                lambda success:
-                    self.download_page.update_finished(
-                        download_id,
-                        success
-                    )
-            )
+    #             lambda success:
+    #                 self.download_page.update_finished(
+    #                     download_id,
+    #                     success
+    #                 )
+    #         )
 
             
 
