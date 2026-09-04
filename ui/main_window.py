@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
 
         self.menu_bar = menubar(self)
 
-        self.setMenuBar(self.menu_bar) 
+        self.setMenuBar(self.menu_bar)
 
         self.tool_bar = toolbar(self)   
 

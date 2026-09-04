@@ -15,12 +15,12 @@ def main():
     db = DatabaseManager()
     print("💾 SQLite Database initialized successfully.")
 
-    # app = QApplication(sys.argv)
+    app = QApplication(sys.argv)
 
-    # window = MainWindow()
-    # window.show()
+    window = MainWindow()
+    window.show()
 
-    # sys.exit(app.exec())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()
