@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Runtime data
+data/
+
+# Logs
+*.log
+
+# Secrets
+client_secret.json
+client_secrets.json
+token.json
+tokens/
+
+# OS
+.DS_Store
+Thumbs.db
