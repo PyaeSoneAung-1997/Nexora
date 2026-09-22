@@ -106,14 +106,14 @@ config/
 
 Tasks:
 
-* [ ] Application paths
-* [ ] Application constants
+* [x] Application paths
+* [x] Application constants
 * [ ] Application configuration
 * [ ] Configuration manager
-* [ ] Runtime directories
-* [ ] Resource paths
-* [ ] aria2 path
-* [ ] Database path
+* [x] Runtime directories
+* [x] Resource paths
+* [x] aria2 path
+* [x] Database path
 
 ---
 
