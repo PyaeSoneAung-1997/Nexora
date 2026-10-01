@@ -20,36 +20,19 @@ from config.app_config_manager import ConfigManager
 
 
 class AppConfig:
-    """
-    Nexora Application Configuration Facade.
-
-    Application တစ်ခုလုံးအတွက်
-    System Paths + Constants + User Settings
-    များကို Single Interface ဖြင့် အသုံးပြုနိုင်ရန်
-    Wrapper အဖြစ် လုပ်ဆောင်သည်။
-    """
-
-    def __init__(self):
-        # ----------------------------------------------------
-        # Application Paths
-        # ----------------------------------------------------
-
+    def __init__(
+            self,
+            config_manager: ConfigManager | None = None,
+            ):
+# Application Paths
         self.data_dir: Path = APP_DATA_DIR
         self.db_path: Path = DATABASE_PATH
         self.logs_dir: Path = LOGS_DIR
-
-        # ----------------------------------------------------
-        # Application Constants
-        # ----------------------------------------------------
-
+# Application Constants
         self.scopes = GOOGLE_SCOPES
         self.chunk_size: int = DEFAULT_CHUNK_SIZE
-
-        # ----------------------------------------------------
-        # User Settings
-        # ----------------------------------------------------
-
-        self.settings = ConfigManager()
+# User Settings
+        self.settings = config_manager or ConfigManager()
 
     # ========================================================
     # Download Settings
@@ -57,17 +40,14 @@ class AppConfig:
 
     @property
     def download_path(self) -> str:
-        """Default download directory."""
-        return self.settings.get("default_download_path")
+        return self.settings.get("default_download_path","",)
 
     @property
     def temp_path(self) -> str:
-        """Temporary download directory."""
-        return self.settings.get("temp_download_path")
+        return self.settings.get("temp_download_path","")
 
     @property
     def max_concurrent(self) -> int:
-        """Maximum number of simultaneous downloads."""
         return int(
             self.settings.get(
                 "max_concurrent_downloads",
@@ -77,7 +57,6 @@ class AppConfig:
 
     @property
     def duplicate_file_action(self) -> str:
-        """Action to take when a duplicate file exists."""
         return self.settings.get(
             "duplicate_file_action",
             "auto_rename"
@@ -85,7 +64,6 @@ class AppConfig:
 
     @property
     def max_retries(self) -> int:
-        """Maximum retry count for a download item."""
         return int(
             self.settings.get(
                 "max_retries_per_item",
@@ -95,7 +73,6 @@ class AppConfig:
 
     @property
     def auto_resume(self) -> bool:
-        """Automatically resume unfinished downloads."""
         return self._to_bool(
             self.settings.get(
                 "auto_resume_on_startup",
@@ -109,10 +86,6 @@ class AppConfig:
 
     @property
     def speed_limit_kbps(self) -> int:
-        """Global download speed limit in KB/s.
-
-        0 = Unlimited
-        """
         return int(
             self.settings.get(
                 "speed_limit_kbps",
@@ -122,7 +95,6 @@ class AppConfig:
 
     @property
     def max_connections_per_file(self) -> int:
-        """Maximum connections per individual file."""
         return int(
             self.settings.get(
                 "max_connections_per_file",
@@ -170,8 +142,7 @@ class AppConfig:
     # ========================================================
 
     @property
-    def prevent_sleep(self) -> bool:
-        """Prevent system sleep while downloading."""
+    def prevent_sleep_during_download(self) -> bool:
         return self._to_bool(
             self.settings.get(
                 "prevent_sleep_during_download",
@@ -181,7 +152,6 @@ class AppConfig:
 
     @property
     def minimize_to_tray(self) -> bool:
-        """Minimize application to system tray on close."""
         return self._to_bool(
             self.settings.get(
                 "minimize_to_tray_on_close",
@@ -189,9 +159,8 @@ class AppConfig:
             )
         )
 
-    @property
+    @property    
     def launch_on_startup(self) -> bool:
-        """Launch Nexora automatically with Windows."""
         return self._to_bool(
             self.settings.get(
                 "launch_on_startup",
@@ -199,9 +168,7 @@ class AppConfig:
             )
         )
 
-    # ========================================================
-    # UI Settings
-    # ========================================================
+# UI Settings
 
     @property
     def theme(self) -> str:
@@ -228,24 +195,13 @@ class AppConfig:
             )
         )
 
-    # ========================================================
-    # Helpers
-    # ========================================================
-
+# Boolean Helpers
     @staticmethod
     def _to_bool(value: str | bool) -> bool:
-        """
-        String value ကို Python bool အဖြစ် ပြောင်းပေးသည်။
-
-        Supported:
-            "true", "1", "yes", "on"  -> True
-            "false", "0", "no", "off" -> False
-        """
-
         if isinstance(value, bool):
             return value
-
-        return str(value).strip().lower() in {
+        
+        return value.strip().lower() in {
             "true",
             "1",
             "yes",

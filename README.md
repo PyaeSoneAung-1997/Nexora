@@ -108,8 +108,8 @@ Tasks:
 
 * [x] Application paths
 * [x] Application constants
-* [ ] Application configuration
-* [ ] Configuration manager
+* [x] Application configuration
+* [x] Configuration manager
 * [x] Runtime directories
 * [x] Resource paths
 * [x] aria2 path
@@ -131,9 +131,9 @@ core/database/
 
 Tasks:
 
-* [ ] Database connection
-* [ ] Database initialization
-* [ ] Schema
+* [x] Database connection
+* [x] Database initialization
+* [x] Schema
 * [ ] Repository base
 * [ ] Account repository
 * [ ] Drive repository
