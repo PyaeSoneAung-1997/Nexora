@@ -2,7 +2,6 @@ from PyQt6.QtCore import QObject, pyqtSignal, QThread
 
 from config.app_paths import DOWNLOAD_DIR
 from core.storage.storage_manager import StorageManager
-from core.database.repositories.base_repository import BaseRepository
 from core.database.repositories.download_repository import DownloadRepository
 from core.aria2_engine.aria2_engine import Aria2Engine
 from core.downloads.download_worker import DownloadWorker
@@ -30,6 +29,8 @@ class DownloadManager(QObject):
 
         self.workers = {}
 
+        self.download_id = None
+
         
     def start_download(self, data):
 
@@ -41,25 +42,31 @@ class DownloadManager(QObject):
 
         save_path = data.get("save_path")
         file_size = data.get("size") or 0
-        # print(file_name)
-        # print(save_path)
-        if not save_path:
-            print("not save_path")
-            save_path = self.default_download_path
 
+        print("Manager_Start_Download_info:")
+        # print("File_name",file_name)
+        # print("Save_path",save_path)
+
+        if not save_path:
+
+            save_path = self.default_download_path
+       
         storage_result = self.storage_manager.check_storage(
                 save_path, 
                 file_size
             )
-        # print(storage_result)
+        
+        # print("Storeage_Result",storage_result)
+
         if not storage_result["success"]:
             return {
                 "success": False,
                 "error": storage_result["error"]
             }
-        # print(file_name)
+# Go repo -> Go Database
 
-        # Go repo -> Go Database
+        print("Download_Repo_Started")
+
         download_id = self.download_repo.create(
             url = url,
             url_type = url_type,
@@ -67,24 +74,28 @@ class DownloadManager(QObject):
             file_name = file_name,
             destination_path = save_path
         )
-        # print(file_name)
+
+        self.download_id = download_id
+        print("Aria2_Engine_Started")
+
         # Repair data aria2 engine
         options = {
             "dir": str(save_path),
             "out": file_name
         }
-
+        print("Options:",options)
         gid = self.aria2_engine.add_download(
             url,
             options
         )
 
-        print(gid)
+        print("Update_aria2_gid")
         self.download_repo.update_aria2_gid(
             download_id,
             gid
         )
 
+        print("Worker_Started")
         # 4. Worker ဖန်တီးမယ်
         worker = DownloadWorker(
             self.aria2_engine,
@@ -93,21 +104,20 @@ class DownloadManager(QObject):
         )
 
         # Creare Thread ဖန်တီးမယ်
-
+        print("Thread_Create")
         thread = QThread()
 
         # worker -> Thread
-    
+        print("Worker to thread")
         worker.moveToThread(thread)
-        print("Controller worker to thread")
+        
         # Thread Start
-
+        print("Thread Started")
         thread.started.connect(
             worker.start
         )
-        print("Controller worker start")
-        
-        # 5. Worker signals ချိတ်မယ်
+
+# 5. Worker signals ချိတ်မယ်
         worker.progress_changed.connect(
             self.handle_progress
         )
@@ -152,21 +162,29 @@ class DownloadManager(QObject):
         }
 
     def handle_progress(self, data):
+        print("Worker_Emit_Progress_Data")
+        print("Manager_Received_Prgress")
+        print("Hi")
+        print("Data",data)
 
-        download_id = data.get("download_id")
-
-        if download_id is not None:
+        # download_id = data.get("download_id")
+        print(self.download_id)
+        if self.download_id is not None:
             self.download_repo.update_progress(
-                download_id=download_id,
-                download_bytes=data["downloaded_bytes"],
+                download_id=self.download_id,
+                downloaded_bytes=data["downloaded_bytes"],
                 total_size=data["total_size"],
                 progress=data["progress"],
-                speed=data["speed"]
+                speed=data["speed"],
+                status=data["status"]
             )
 
         self.progress_changed.emit(data)
 
     def handle_completed(self, data):
+        print("Worker_Emit_Complete_Data")
+        print("Manager_Received_Complete")
+        print("Data",data)
         pass
         # download_id = data.get("download_id")
         # print("handle_completed")
@@ -191,8 +209,10 @@ class DownloadManager(QObject):
 
         # self.download_completed.emit(data)
 
-    def handle_error(self, data):
-        # print(data.get("error"))
+    def handle_error(self, data): 
+        print("Worker_Emit_Error_Data")
+        print("Manager_Received_Error")
+        print("Data",data)
         pass
 
         # download_id = data.get("download_id")
@@ -221,15 +241,21 @@ class DownloadManager(QObject):
 
     def pause(self,current_gid):
         self.aria2_engine.pause(current_gid)
-        # print("Manager Pause")
+        print("Manager Pause")
 
     def resume(self,current_gid):
         self.aria2_engine.resume(current_gid)
-        # print("Manager Resume")
+        print("Manager Resume")
     
     def remove(self,current_gid):
         self.aria2_engine.remove(current_gid)
         print("Manager Remove")
+
+    def shutdown(self):
+
+        print("Shutting down DownloadManager...")
+
+        self.aria2_engine.stop()
 
           
         

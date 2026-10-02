@@ -24,38 +24,40 @@ class DownloadWorker(QObject):
         self.timer = None
 
     def start(self):
+
+        print("Worker Start")
+
         self.timer = QTimer(self)
 
-        
+
         self.timer.timeout.connect(
             self.check_status
         )
 
         self.timer.start(1000)
-        # print("timer")
-        # print(self.check_status)
+
 
     def stop(self):
         if self.timer is not None:
             self.timer.stop()
 
     def check_status(self):
+        print("Check_Status_Started")
 
         try:
             status = self.aria2_engine.get_status(
                 self.gid
             )
-            # print("Hi Status")
-            # print(status)
 
             if not status:
                 return
             
-            print(status)
+            
             self.handle_status(status)
+            print(status)
 
         except Exception as e:
-
+            print("Worker_error_emit")
             self.download_error.emit({
                 "download_id":self.download_id,
                 "gid": self.gid,
@@ -65,6 +67,7 @@ class DownloadWorker(QObject):
             self.stop()
 
     def handle_status(self, status):
+        print("handle_status_started")
 
         total_size = int(
             status.get("totalLength", 0)
@@ -102,8 +105,9 @@ class DownloadWorker(QObject):
         }
 
         if aria2_status == "complete":
-
-            print(aria2_status)
+            print("Worker_progress_changed_emit")
+            print("Worker_complete_emit")
+            # print(aria2_status)
 
             self.progress_changed.emit(data)
 
@@ -126,4 +130,4 @@ class DownloadWorker(QObject):
             return
 
         self.progress_changed.emit(data)
-        # print("progress changed")
+        print("worker_progress_changed_emit")

@@ -1,6 +1,8 @@
 import subprocess
 import time
 import requests
+import os
+# import threading
 
 from config.app_paths import ARIA2_PATH
 
@@ -18,25 +20,41 @@ class Aria2Engine:
 
     def start_aria2(self):
 
+        command = [
+                        self.aria2_path,
+                        "--enable-rpc=true",
+                        "--rpc-listen-port=6800",
+                        "--rpc-listen-all=false",
+        
+                        "--max-connection-per-server=8",
+                        "--min-split-size=10M",
+                        "--file-allocation=none",
+                        # "--log=D:/aria2.log",
+                        # "--log-level=debug"
+                    ]
+
+        # print("=== ARIA2 DEBUG ===")
+        # print("Executable:", self.aria2_path)
+        # print("Command:", command)
+        # print("CWD:", os.getcwd())
+        # print("Proxy environment:")
+        # print("HTTP_PROXY =", os.environ.get("HTTP_PROXY"))
+        # print("HTTPS_PROXY =", os.environ.get("HTTPS_PROXY"))
+        # print("ALL_PROXY =", os.environ.get("ALL_PROXY"))
+        # print("===================")
+
         self.process = subprocess.Popen(
-            [
-                self.aria2_path,
-                "--enable-rpc=true",
-                "--rpc-listen-port=6800",
-                "--rpc-listen-all=false",
-                "--max-connection-per-server=8",
-                "--min-split-size=10M",
-                "--file-allocation=none",
-                "--log=D:/aria2.log",
-                "--log-level=debug"
-            ],
-            # stdout=subprocess.DEVNULL,
-            # stderr=subprocess.DEVNULL
-              stdout=subprocess.PIPE,
-              stderr=subprocess.PIPE,
-              text=True
+            command,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+            # stdout=subprocess.PIPE,
+            # stderr=subprocess.STDOUT,
+            # text=True,
+            # bufsize=1
         )
 
+        
+    
         for _ in range(30):
 
             try:
@@ -72,9 +90,13 @@ class Aria2Engine:
             "params": params or []
         }
 
+        # print("RPC REQUEST:", payload)
+
         response = requests.post(
             self.rpc_url,
-            json=payload
+            json=payload,
+            # timeout=(10)
+            timeout = (3,5)
         )
 
         
@@ -91,6 +113,8 @@ class Aria2Engine:
         return data.get("result")
     
     def add_download(self, url, options=None):
+
+        print("Aria2 Engine Started")
         print("Adding download:", url)
         print("Options:", options)
 
@@ -112,18 +136,18 @@ class Aria2Engine:
 
         return self._request(
         "aria2.tellStatus",
-            gid
+            [gid]
     )
 
     def pause(self,gid:str):
-
+        print("aria2 pause")
         return self._request(
             "aria2.pause",
             [gid]
         )
 
     def resume(self,gid:str):
-
+        print("aria2 pause")
         return self._request(
             "aria2.unpause",
             [gid]
@@ -135,3 +159,15 @@ class Aria2Engine:
             "aria2.remove",
             [gid]
         ) 
+    
+    def stop(self):
+
+        if self.process is not None:
+            self.process.terminate()
+
+            try:
+                self.process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+
+            self.process = None

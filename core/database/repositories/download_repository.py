@@ -87,29 +87,32 @@ class DownloadRepository(BaseRepository):
     def update_progress(
                 self,
                 download_id: int,
-                download_bytes: int,
+                downloaded_bytes: int,
                 total_size: int,
                 progress: int,
-                speed: int
+                speed: int,
+                status:str
         ) -> None:
     
             query = """
             UPDATE downloads
             SET 
-                download_bytes = ?
-                total_size = ?
-                progress = ?
-                speed = ?
+                downloaded_bytes = ?,
+                total_size = ?,
+                progress = ?,
+                speed = ?, 
+                status = ?
             WHERE id = ?
             """
     
             self.db_manager.execute_query(
                 query,
                 (
-                    download_bytes,
+                    downloaded_bytes,
                     total_size,
                     progress,
                     speed,
+                    status,
                     download_id
                 )
             )
@@ -166,7 +169,7 @@ class DownloadRepository(BaseRepository):
             query = """
             UPDATE downloads
             SET 
-                status = ?
+                status = ?,
                 error_message = ?
             WHERE id = ?
             """

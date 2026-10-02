@@ -22,6 +22,10 @@ class MainWindow(QMainWindow):
         self.addToolBar(self.tool_bar)
 
         #connector
-        self.controller_manager = ControllerManager(
-            self
-            )
+        self.controller_manager = ControllerManager(self)
+        
+    def closeEvent(self, event):
+
+        self.controller_manager.shutdown()
+
+        event.accept()

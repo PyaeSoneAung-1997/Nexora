@@ -38,21 +38,25 @@ class ControllerManager(QObject):
         )
 
     def handle_url_result(self, check):
+        print("Url_Check:",check)
 
         if check["type"] == "direct_file":
             url = check["url"]
+            print("Url_Check:","Passed")
             self.file_info(url)
-
+        
         elif check["type"] == "google_drive":
             pass  # Placeholder for future implementation
 
         elif check["type"] == "website":
             pass  # Placeholder for future implementation
 
+       
+
     def file_info(self, url):
 
         info = self.file_info_manager.get_info(url)
-        # print(info)
+        print("Fileinfo:", info)
         if not info["success"]:
 
             QMessageBox.warning(
@@ -62,13 +66,20 @@ class ControllerManager(QObject):
             )
             return
 
+        print("Fileinfo:", "Passed")
+
         self.download(url,info)
 
     def download(self,url,info):
 
+        print("Download_Controller_Started:")
         # direct download
         self.download_controller.show_direct_download(
             url,
             info
             )
+        
+    def shutdown(self):
+
+        self.download_controller.shutdown()
     

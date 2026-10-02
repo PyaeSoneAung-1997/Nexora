@@ -17,6 +17,7 @@ class DownloadController(QObject):
         self.db = db_manager
         self.main_window = main_window
         self.download_manager = DownloadManager(self.db)
+        
         self.direct_dialog = None
         self.progress_dialog = None
 
@@ -100,8 +101,10 @@ class DownloadController(QObject):
                     self.remove_request
                 )   
                 
+        print("Download_Manager_Started:")
+
         result = self.download_manager.start_download(data)    
-        print(result)   
+          
 
         if not result["success"]:
             self.progress_dialog.close()
@@ -120,7 +123,7 @@ class DownloadController(QObject):
         print("Aria2 GID:", self.current_gid)
 
         
-        print("Download request accepted.")
+        # print("Download request accepted.")
         
         # self.download_requested.emit(data)
 
@@ -138,6 +141,10 @@ class DownloadController(QObject):
 
     def handle_progress(self, data):
 
+        print("Manager_Emit_Progress_Data")
+        print("Controllerr_Received_Prgress")
+        print(data)
+
         if self.progress_dialog is not None:
             self.progress_dialog.update_progress(
                 progress=data["progress"],
@@ -150,6 +157,8 @@ class DownloadController(QObject):
             )
 
     def handle_completed(self, data):
+        print("Manager_Emit_Complete_Data")
+        print("Controller_Received_Complete_Data")
         print(data)
         # self.complete_dialog = DownloadCompleteDialog(
         #     data,
@@ -157,17 +166,26 @@ class DownloadController(QObject):
         # )
 
     def handle_error(self, data):
+        print("Manager_Emit_Error_Data")
+        print("Controller_Received_Error_Data")
+        print(data)
         pass
         
 
     def pause_request(self):
         self.download_manager.pause(self.current_gid)
-        # print("Controller Pause Requested")
+        print(self.current_gid)
+        print("Controller Pause Requested")
 
     def resume_request(self):
         self.download_manager.resume(self.current_gid)
-        # print("Controller Resume Requested")
+        print(self.current_gid)
+        print("Controller Resume Requested")
 
     def remove_request(self):
         self.download_manager.remove(self.current_gid)
-        # print("Controller Remove Requested")
+        print("Controller Remove Requested")
+
+    def shutdown(self):
+
+        self.download_manager.shutdown()
